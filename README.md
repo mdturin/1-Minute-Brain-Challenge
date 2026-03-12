@@ -1,1 +1,57 @@
-# 1-Minute-Brain-Challenge
+# 1 Minute Brain Challenge
+
+React Native + Expo mini-game where you have **60 seconds** to solve as many brain puzzles as possible.
+
+## Features
+
+- **Home screen**
+  - Game title and short description.
+  - Button to start a new 1‑minute challenge.
+  - Simple stats: best score, games played, average score.
+
+- **Puzzle screen**
+  - Endless stream of mini-puzzles for 60 seconds.
+  - Visual countdown bar and remaining seconds text.
+  - Live score and streak display.
+
+- **Timer system**
+  - 60‑second countdown with a shrinking progress bar.
+  - Color changes (green → yellow → red) as time runs out.
+
+- **Score system**
+  - Score increments for each correct answer.
+  - Tracks current streak and best streak per game.
+  - Persists best score and basic stats locally.
+
+- **Puzzle types**
+  - Mental math (quick arithmetic).
+  - Memory sequence (remember and recall numbers).
+  - Simple logic patterns (what comes next?).
+
+- **Tech stack**
+  - React Native + Expo.
+  - TypeScript.
+  - React Navigation.
+  - AsyncStorage for local stats.
+
+## Getting Started
+
+Clone the repo and install dependencies:
+
+```bash
+git clone https://github.com/mdturin/1-Minute-Brain-Challenge.git
+cd "1 Minute Brain Challenge/app"
+npm install
+```
+
+Start the Expo dev server:
+
+```bash
+npm start
+```
+
+Then:
+
+- Press `w` to run on **web** in your browser, or
+- Use the **Expo Go** app on your phone to scan the QR code and play on a real device.
+
