@@ -1,13 +1,35 @@
 import type { Puzzle } from './types';
+import type { Difficulty } from '../difficulty';
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function generateMentalMathPuzzle(): Puzzle {
-  const a = randomInt(1, 20);
-  const b = randomInt(1, 20);
-  const opIndex = randomInt(0, 2);
+export function generateMentalMathPuzzle(difficulty: Difficulty): Puzzle {
+  let maxValue: number;
+  let allowMultiplication: boolean;
+
+  switch (difficulty) {
+    case 'easy':
+      maxValue = 20;
+      allowMultiplication = false;
+      break;
+    case 'medium':
+      maxValue = 40;
+      allowMultiplication = true;
+      break;
+    case 'hard':
+      maxValue = 80;
+      allowMultiplication = true;
+      break;
+    default:
+      maxValue = 30;
+      allowMultiplication = true;
+  }
+
+  const a = randomInt(1, maxValue);
+  const b = randomInt(1, maxValue);
+  const opIndex = allowMultiplication ? randomInt(0, 2) : randomInt(0, 1);
   const ops = ['+', '-', '×'] as const;
   const op = ops[opIndex];
 

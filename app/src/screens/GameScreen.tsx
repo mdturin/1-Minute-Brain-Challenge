@@ -7,6 +7,8 @@ import ScoreDisplay from '../components/ScoreDisplay';
 import PrimaryButton from '../components/PrimaryButton';
 import Card from '../components/Card';
 import { generateRandomPuzzle, Puzzle } from '../logic/puzzles';
+import { DIFFICULTIES } from '../logic/difficulty';
+import { calculateScoreForAnswer } from '../logic/scoring';
 import MentalMathView from '../components/puzzles/MentalMathView';
 import MemorySequenceView from '../components/puzzles/MemorySequenceView';
 import LogicMiniView from '../components/puzzles/LogicMiniView';
@@ -16,9 +18,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
 const GAME_DURATION_SECONDS = 60;
 
-export default function GameScreen({ navigation }: Props) {
+export default function GameScreen({ navigation, route }: Props) {
+  const difficultyKey = route.params.difficulty;
+  const difficultyConfig = DIFFICULTIES[difficultyKey];
+
   const [remainingTime, setRemainingTime] = useState<number>(GAME_DURATION_SECONDS);
-  const [currentPuzzle, setCurrentPuzzle] = useState<Puzzle>(() => generateRandomPuzzle());
+  const [currentPuzzle, setCurrentPuzzle] = useState<Puzzle>(() => generateRandomPuzzle(difficultyKey));
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
@@ -31,8 +36,8 @@ export default function GameScreen({ navigation }: Props) {
     setStreak(0);
     setMaxStreak(0);
     setStatus('playing');
-    setCurrentPuzzle(generateRandomPuzzle());
-  }, []);
+    setCurrentPuzzle(generateRandomPuzzle(difficultyKey));
+  }, [difficultyKey]);
 
   useEffect(() => {
     if (status !== 'playing') {
@@ -72,10 +77,14 @@ export default function GameScreen({ navigation }: Props) {
     }
 
     setScore((prev) => {
-      if (!isCorrect) {
-        return prev;
-      }
-      return prev + 1;
+      const remainingFraction = remainingTime / GAME_DURATION_SECONDS;
+      const delta = calculateScoreForAnswer({
+        puzzle: currentPuzzle,
+        difficulty: difficultyKey,
+        isCorrect,
+        remainingFraction,
+      });
+      return prev + delta;
     });
 
     setStreak((prev) => {
@@ -87,7 +96,7 @@ export default function GameScreen({ navigation }: Props) {
       return nextStreak;
     });
 
-    setCurrentPuzzle((prev) => generateRandomPuzzle(prev.type));
+    setCurrentPuzzle((prev) => generateRandomPuzzle(difficultyKey, prev.type));
   };
 
   const handleBackToHome = () => {
@@ -118,6 +127,7 @@ export default function GameScreen({ navigation }: Props) {
       <View style={styles.container}>
         <View style={styles.topBar}>
           <Text style={styles.screenTitle}>1 Minute Brain Challenge</Text>
+          <Text style={styles.difficultyBadge}>{difficultyConfig.label}</Text>
         </View>
 
         <TimerBar progress={progress} remainingSeconds={remainingTime} />
@@ -159,12 +169,23 @@ const styles = StyleSheet.create({
   },
   topBar: {
     marginBottom: 12,
+    alignItems: 'center',
   },
   screenTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#e4e4e7',
     textAlign: 'center',
+  },
+  difficultyBadge: {
+    marginTop: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#1d4ed8',
+    color: '#e5e7eb',
+    fontSize: 12,
+    overflow: 'hidden',
   },
   main: {
     flex: 1,

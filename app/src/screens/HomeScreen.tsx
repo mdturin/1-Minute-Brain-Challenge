@@ -3,6 +3,7 @@ import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator } from 'react-n
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import PrimaryButton from '../components/PrimaryButton';
+import { DIFFICULTIES, orderedDifficulties } from '../logic/difficulty';
 import { loadStats } from '../storage/stats';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -25,10 +26,6 @@ export default function HomeScreen({ navigation }: Props) {
     fetchStats();
   }, []);
 
-  const handleStart = () => {
-    navigation.navigate('Game');
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -38,7 +35,20 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.center}>
-          <PrimaryButton label="Start 1-Minute Challenge" onPress={handleStart} />
+          {orderedDifficulties.map((key) => {
+            const config = DIFFICULTIES[key];
+            return (
+              <View key={config.key} style={styles.modeCard}>
+                <Text style={styles.modeLabel}>{config.label}</Text>
+                <Text style={styles.modeAge}>{config.ageRangeLabel}</Text>
+                <Text style={styles.modeDescription}>{config.description}</Text>
+                <PrimaryButton
+                  label={`Play ${config.label}`}
+                  onPress={() => navigation.navigate('Game', { difficulty: config.key })}
+                />
+              </View>
+            );
+          })}
         </View>
 
         <View style={styles.footer}>
@@ -96,7 +106,31 @@ const styles = StyleSheet.create({
   center: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'stretch',
+    gap: 16,
+  },
+  modeCard: {
+    backgroundColor: '#18181b',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+  modeLabel: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#f4f4f5',
+  },
+  modeAge: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#a1a1aa',
+  },
+  modeDescription: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#e4e4e7',
+    marginBottom: 12,
   },
   footer: {
     marginBottom: 12,

@@ -6,7 +6,9 @@ import GameScreen from './src/screens/GameScreen';
 
 export type RootStackParamList = {
   Home: undefined;
-  Game: undefined;
+  Game: {
+    difficulty: 'easy' | 'medium' | 'hard';
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
