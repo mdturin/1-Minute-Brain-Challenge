@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Animated, Easing } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Animated, Easing, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import PrimaryButton from '../components/PrimaryButton';
@@ -9,6 +9,7 @@ import { loadStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
 import { canStartGame, getCostForDifficulty } from '../logic/energy';
 import { showRewardedWithCallbacks } from '../logic/ads';
+import { loadUserProfile, type UserProfile } from '../storage/userProfile';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -17,6 +18,8 @@ export default function HomeScreen({ navigation }: Props) {
   const [bestScore, setBestScore] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
   const [averageScore, setAverageScore] = useState(0);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const { energy, maxEnergy, isLoading: energyLoading, spendForDifficulty, grantEnergy } = useEnergy();
   const [energyMessage, setEnergyMessage] = useState<string | null>(null);
   const [isAnimatingPlay, setIsAnimatingPlay] = useState(false);
@@ -40,15 +43,18 @@ export default function HomeScreen({ navigation }: Props) {
   }, [energy, isAnimatingPlay, animatedEnergyValue]);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const stats = await loadStats();
+    const fetchData = async () => {
+      const [stats, loadedProfile] = await Promise.all([loadStats(), loadUserProfile()]);
+
       setBestScore(stats.bestScore);
       setGamesPlayed(stats.gamesPlayed);
       setAverageScore(stats.gamesPlayed > 0 ? Math.round(stats.totalScore / stats.gamesPlayed) : 0);
+      setProfile(loadedProfile);
       setLoading(false);
+      setProfileLoading(false);
     };
 
-    fetchStats();
+    void fetchData();
   }, []);
 
   const handlePlayPress = async (difficultyKey: keyof typeof DIFFICULTIES) => {
@@ -112,6 +118,31 @@ export default function HomeScreen({ navigation }: Props) {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
+          <View style={styles.headerTopRow}>
+            <Text style={styles.title}>1 Minute Brain Challenge</Text>
+            <TouchableOpacity
+              style={styles.profileChip}
+              onPress={() => navigation.navigate('Profile')}
+              disabled={profileLoading}
+            >
+              <View style={styles.profileAvatar}>
+                <Text style={styles.profileAvatarText}>
+                  {(profile?.displayName ?? 'Guest')
+                    .split(' ')
+                    .filter(Boolean)
+                    .map((part) => part[0]?.toUpperCase())
+                    .slice(0, 2)
+                    .join('') || 'G'}
+                </Text>
+              </View>
+              <View style={styles.profileTextContainer}>
+                <Text style={styles.profileName} numberOfLines={1}>
+                  {profileLoading ? 'Loading...' : profile?.displayName || 'Guest'}
+                </Text>
+                <Text style={styles.profileLink}>View profile</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.title}>1 Minute Brain Challenge</Text>
           <Text style={styles.subtitle}>You have 60 seconds. Answer as many mini-puzzles as you can.</Text>
           <View style={styles.energyContainer}>
@@ -220,6 +251,12 @@ const styles = StyleSheet.create({
   header: {
     marginTop: 32,
   },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
@@ -231,6 +268,43 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#a1a1aa',
     textAlign: 'center',
+  },
+  profileChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#020617',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.6)',
+    marginLeft: 12,
+  },
+  profileAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#4f46e5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  profileAvatarText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#f9fafb',
+  },
+  profileTextContainer: {
+    maxWidth: 140,
+  },
+  profileName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#e5e7eb',
+  },
+  profileLink: {
+    fontSize: 11,
+    color: '#a5b4fc',
   },
   energyContainer: {
     marginTop: 16,
