@@ -121,13 +121,6 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={styles.innerContainer}>
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
-            <Text
-              style={styles.title}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >
-              1 Minute Brain Challenge
-            </Text>
             <TouchableOpacity
               style={styles.profileChip}
               onPress={() => navigation.navigate('Profile')}
@@ -150,27 +143,27 @@ export default function HomeScreen({ navigation }: Props) {
                 <Text style={styles.profileLink}>View profile</Text>
               </View>
             </TouchableOpacity>
-          </View>
-          <Text style={styles.subtitle}>You have 60 seconds. Answer as many mini-puzzles as you can.</Text>
-          <View style={styles.energyContainer}>
-            <View style={styles.energyHeaderRow}>
-              <Text style={styles.energyLabel}>Energy</Text>
-              <Text style={styles.energyValue}>
-                {energyLoading ? '...' : `${energy} / ${maxEnergy}`}
-              </Text>
+            <View style={styles.energyContainer}>
+              <View style={styles.energyHeaderRow}>
+                <Text style={styles.energyLabel}>Energy</Text>
+                <Text style={styles.energyValue}>
+                  {energyLoading ? '...' : `${energy} / ${maxEnergy}`}
+                </Text>
+              </View>
+              <View style={styles.energyBarBackground}>
+                <Animated.View
+                  style={[
+                    styles.energyBarFill,
+                    {
+                      width: animatedEnergyWidth,
+                      transform: [{ scaleY: pulseScale }],
+                    },
+                  ]}
+                />
+              </View>
             </View>
-            <View style={styles.energyBarBackground}>
-              <Animated.View
-                style={[
-                  styles.energyBarFill,
-                  {
-                    width: animatedEnergyWidth,
-                    transform: [{ scaleY: pulseScale }],
-                  },
-                ]}
-              />
-            </View>
           </View>
+          <Text style={styles.subtitle}>Answer as many mini-puzzles as you can.</Text>
           {energyMessage && <Text style={styles.energyMessage}>{energyMessage}</Text>}
         </View>
 
@@ -290,7 +283,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.6)',
-    marginLeft: 12,
   },
   profileAvatar: {
     width: 32,
@@ -319,12 +311,12 @@ const styles = StyleSheet.create({
     color: '#a5b4fc',
   },
   energyContainer: {
-    marginTop: 16,
+    marginTop: 0,
     backgroundColor: '#0b1120',
     borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginBottom: 0,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.5)',
   },
