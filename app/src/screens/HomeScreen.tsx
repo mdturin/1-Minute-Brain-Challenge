@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Animated, Easing, TouchableOpacity } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Animated, Easing, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import PrimaryButton from '../components/PrimaryButton';
@@ -23,6 +23,7 @@ export default function HomeScreen({ navigation }: Props) {
   const { energy, maxEnergy, isLoading: energyLoading, spendForDifficulty, grantEnergy } = useEnergy();
   const [energyMessage, setEnergyMessage] = useState<string | null>(null);
   const [isAnimatingPlay, setIsAnimatingPlay] = useState(false);
+  const window = useWindowDimensions();
 
   const animatedEnergyValue = useRef(new Animated.Value(energy)).current;
   const pulseValue = useRef(new Animated.Value(0)).current;
@@ -119,7 +120,13 @@ export default function HomeScreen({ navigation }: Props) {
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
-            <Text style={styles.title}>1 Minute Brain Challenge</Text>
+            <Text
+              style={styles.title}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              1 Minute Brain Challenge
+            </Text>
             <TouchableOpacity
               style={styles.profileChip}
               onPress={() => navigation.navigate('Profile')}
@@ -143,7 +150,6 @@ export default function HomeScreen({ navigation }: Props) {
               </View>
             </TouchableOpacity>
           </View>
-          <Text style={styles.title}>1 Minute Brain Challenge</Text>
           <Text style={styles.subtitle}>You have 60 seconds. Answer as many mini-puzzles as you can.</Text>
           <View style={styles.energyContainer}>
             <View style={styles.energyHeaderRow}>
@@ -374,9 +380,12 @@ const styles = StyleSheet.create({
   modeCard: {
     backgroundColor: '#18181b',
     borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    marginBottom: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
   },
   modeLabel: {
     fontSize: 18,
