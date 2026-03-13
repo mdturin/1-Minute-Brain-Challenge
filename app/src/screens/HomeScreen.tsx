@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Animated, Easing, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, Animated, Easing, TouchableOpacity, useWindowDimensions, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import PrimaryButton from '../components/PrimaryButton';
@@ -117,7 +117,8 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.innerContainer}>
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
             <Text
@@ -238,7 +239,8 @@ export default function HomeScreen({ navigation }: Props) {
           )}
         </View>
         <BannerAd />
-      </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -248,14 +250,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#050816',
   },
-  container: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingVertical: 16,
     backgroundColor: '#050816',
   },
+  innerContainer: {
+    flex: 1,
+    backgroundColor: '#050816',
+  },
   header: {
-    marginTop: 32,
+    marginTop: 16,
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -318,6 +324,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.5)',
   },
@@ -360,10 +367,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   center: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'stretch',
     gap: 16,
+    marginTop: 20,
   },
   rewardContainer: {
     marginBottom: 16,
