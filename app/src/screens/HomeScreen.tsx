@@ -131,12 +131,6 @@ export default function HomeScreen({ navigation }: Props) {
               <View style={styles.profileAvatar}>
                 <Ionicons name="person" size={20} color="#f9fafb" />
               </View>
-              <View style={styles.profileTextContainer}>
-                <Text style={styles.profileName} numberOfLines={1}>
-                  {profileLoading ? 'Loading...' : 'Profile'}
-                </Text>
-                <Text style={styles.profileLink}>View profile</Text>
-              </View>
             </TouchableOpacity>
             <View style={styles.energyContainer} accessibilityLabel={`Energy bar, current level ${energy} out of ${maxEnergy}, refills over time`}>
               <View style={styles.energyHeaderRow}>
@@ -271,12 +265,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   profileChip: {
-    flexDirection: 'row',
+    width: 40,
+    height: 40,
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    justifyContent: 'center',
     backgroundColor: '#020617',
-    borderRadius: 999,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.6)',
     shadowColor: '#020617',
@@ -292,7 +286,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
   },
   profileAvatarText: {
     fontSize: 14,
@@ -312,7 +305,9 @@ const styles = StyleSheet.create({
     color: '#a5b4fc',
   },
   energyContainer: {
+    flex: 1,
     marginTop: 0,
+    marginLeft: 12,
     backgroundColor: '#0b1120',
     borderRadius: 12,
     paddingVertical: 6,
