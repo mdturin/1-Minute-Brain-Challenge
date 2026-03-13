@@ -75,7 +75,7 @@ export function showRewardedWithCallbacks(onReward: () => void, onClosed?: () =>
     onReward();
   });
 
-  const unsubscribeClosed = ad.addAdEventListener(RewardedAdEventType.CLOSED, () => {
+  const unsubscribeClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
     unsubscribeLoaded();
     unsubscribeReward();
     unsubscribeClosed();
@@ -83,7 +83,7 @@ export function showRewardedWithCallbacks(onReward: () => void, onClosed?: () =>
     onClosed?.();
   });
 
-  const unsubscribeError = ad.addAdEventListener(RewardedAdEventType.ERROR, () => {
+  const unsubscribeError = ad.addAdEventListener(AdEventType.ERROR, () => {
     unsubscribeLoaded();
     unsubscribeReward();
     unsubscribeClosed();
