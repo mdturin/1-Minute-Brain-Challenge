@@ -10,6 +10,7 @@ import { useEnergy } from '../logic/useEnergy';
 import { canStartGame, getCostForDifficulty } from '../logic/energy';
 import { showRewardedWithCallbacks } from '../logic/ads';
 import { loadUserProfile, type UserProfile } from '../storage/userProfile';
+import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -125,26 +126,21 @@ export default function HomeScreen({ navigation }: Props) {
               style={styles.profileChip}
               onPress={() => navigation.navigate('Profile')}
               disabled={profileLoading}
+              accessibilityLabel="Profile button, tap to view or edit profile"
             >
               <View style={styles.profileAvatar}>
-                <Text style={styles.profileAvatarText}>
-                  {(profile?.displayName ?? 'Guest')
-                    .split(' ')
-                    .filter(Boolean)
-                    .map((part) => part[0]?.toUpperCase())
-                    .slice(0, 2)
-                    .join('') || 'G'}
-                </Text>
+                <Ionicons name="person" size={20} color="#f9fafb" />
               </View>
               <View style={styles.profileTextContainer}>
                 <Text style={styles.profileName} numberOfLines={1}>
-                  {profileLoading ? 'Loading...' : profile?.displayName || 'Guest'}
+                  {profileLoading ? 'Loading...' : 'Profile'}
                 </Text>
                 <Text style={styles.profileLink}>View profile</Text>
               </View>
             </TouchableOpacity>
-            <View style={styles.energyContainer}>
+            <View style={styles.energyContainer} accessibilityLabel={`Energy bar, current level ${energy} out of ${maxEnergy}, refills over time`}>
               <View style={styles.energyHeaderRow}>
+                <Ionicons name="flash" size={16} color="#a5b4fc" />
                 <Text style={styles.energyLabel}>Energy</Text>
                 <Text style={styles.energyValue}>
                   {energyLoading ? '...' : `${energy} / ${maxEnergy}`}
@@ -283,6 +279,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.6)',
+    shadowColor: '#020617',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   profileAvatar: {
     width: 32,
@@ -319,6 +320,11 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.5)',
+    shadowColor: '#0b1120',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   energyHeaderRow: {
     flexDirection: 'row',
@@ -344,8 +350,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#111827',
   },
   energyBarFill: {
-    backgroundColor: '#22c55e',
+    backgroundColor: '#10b981',
     borderRadius: 999,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 5,
   },
   energyHint: {
     marginTop: 4,
