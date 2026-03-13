@@ -104,10 +104,26 @@ export default function ProfileScreen({ navigation }: Props) {
     }
   };
 
+  const handleSave = async () => {
+    if (!profile) return;
+
+    setIsSaving(true);
+    setHasError(false);
+
+    try {
+      await saveUserProfile(profile);
+    } catch (error: any) {
+      setHasError(true);
+      Alert.alert('Error', error.message || 'Unable to save profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={[styles.scrollContent, styles.authScrollContent]}>
           <View style={styles.authContainer}>
             <Text style={styles.title}>{isLogin ? 'Login' : 'Sign Up'}</Text>
             <TextInput
@@ -117,6 +133,8 @@ export default function ProfileScreen({ navigation }: Props) {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoCorrect={false}
+              placeholderTextColor="#6b7280"
             />
             <TextInput
               style={styles.input}
@@ -124,9 +142,10 @@ export default function ProfileScreen({ navigation }: Props) {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              placeholderTextColor="#6b7280"
             />
             <PrimaryButton
-              title={isLogin ? 'Login' : 'Sign Up'}
+              label={authLoading ? (isLogin ? 'Logging in…' : 'Signing up…') : isLogin ? 'Login' : 'Sign Up'}
               onPress={handleAuth}
               disabled={authLoading}
             />
@@ -365,6 +384,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   input: {
+    width: '100%',
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.6)',
@@ -416,9 +436,16 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
   },
   authContainer: {
-    flex: 1,
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+  },
+  authScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,
