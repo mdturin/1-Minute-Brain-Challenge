@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import HomeScreen from './src/screens/HomeScreen';
 import GameScreen from './src/screens/GameScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import './src/logic/firebaseConfig'; // Initialize Firebase
 
 export type RootStackParamList = {
   Home: undefined;

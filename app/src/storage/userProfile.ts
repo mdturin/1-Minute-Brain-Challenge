@@ -1,20 +1,37 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../logic/firebaseConfig";
+import { getCurrentUser } from "../logic/auth";
 
-const STORAGE_KEY = 'one-minute-brain-challenge/user-profile';
+const STORAGE_KEY = "one-minute-brain-challenge/user-profile";
 
 export type UserProfile = {
   displayName: string;
-  avatarType: 'initials' | 'image';
+  avatarType: "initials" | "image";
   age?: number;
   country?: string;
 };
 
 const defaultProfile: UserProfile = {
-  displayName: 'Guest',
-  avatarType: 'initials',
+  displayName: "Guest",
+  avatarType: "initials",
 };
 
 export async function loadUserProfile(): Promise<UserProfile> {
+  const user = getCurrentUser();
+  if (user) {
+    try {
+      const docRef = doc(db, "users", user.uid, "profile", "data");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data() as UserProfile;
+      }
+    } catch (error) {
+      console.error("Error loading profile from Firestore:", error);
+    }
+  }
+
+  // Fallback to local storage
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -33,10 +50,21 @@ export async function loadUserProfile(): Promise<UserProfile> {
 }
 
 export async function saveUserProfile(profile: UserProfile): Promise<void> {
+  const user = getCurrentUser();
+  if (user) {
+    try {
+      const docRef = doc(db, "users", user.uid, "profile", "data");
+      await setDoc(docRef, profile);
+      return;
+    } catch (error) {
+      console.error("Error saving profile to Firestore:", error);
+    }
+  }
+
+  // Fallback to local storage
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
   } catch {
     // ignore persistence errors for profile; UI will continue with in-memory state
   }
 }
-

@@ -1,6 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../logic/firebaseConfig";
+import { getCurrentUser } from "../logic/auth";
 
-const STORAGE_KEY = 'one-minute-brain-challenge/stats';
+const STORAGE_KEY = "one-minute-brain-challenge/stats";
 
 export type GameStats = {
   bestScore: number;
@@ -17,6 +20,20 @@ const defaultStats: GameStats = {
 };
 
 export async function loadStats(): Promise<GameStats> {
+  const user = getCurrentUser();
+  if (user) {
+    try {
+      const docRef = doc(db, "users", user.uid, "stats", "data");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data() as GameStats;
+      }
+    } catch (error) {
+      console.error("Error loading stats from Firestore:", error);
+    }
+  }
+
+  // Fallback to local storage
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -32,7 +49,10 @@ export async function loadStats(): Promise<GameStats> {
   }
 }
 
-export async function updateStats(params: { lastScore: number; lastMaxStreak: number }): Promise<void> {
+export async function updateStats(params: {
+  lastScore: number;
+  lastMaxStreak: number;
+}): Promise<void> {
   const current = await loadStats();
   const next: GameStats = {
     bestScore: Math.max(current.bestScore, params.lastScore),
@@ -41,10 +61,21 @@ export async function updateStats(params: { lastScore: number; lastMaxStreak: nu
     bestStreak: Math.max(current.bestStreak, params.lastMaxStreak),
   };
 
+  const user = getCurrentUser();
+  if (user) {
+    try {
+      const docRef = doc(db, "users", user.uid, "stats", "data");
+      await setDoc(docRef, next);
+      return;
+    } catch (error) {
+      console.error("Error saving stats to Firestore:", error);
+    }
+  }
+
+  // Fallback to local storage
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {
     // ignore persistence errors in gameplay
   }
 }
-

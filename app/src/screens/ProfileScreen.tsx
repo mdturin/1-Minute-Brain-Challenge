@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { loadUserProfile, saveUserProfile, type UserProfile } from '../storage/userProfile';
 import { loadStats, type GameStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
 import PrimaryButton from '../components/PrimaryButton';
+import { signIn, signUp, signOut, onAuthStateChanged, type AuthUser } from '../logic/auth';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -14,21 +15,36 @@ export default function ProfileScreen({ navigation }: Props) {
   const [stats, setStats] = useState<GameStats | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false);
 
   const { energy, maxEnergy, isLoading: energyLoading } = useEnergy();
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        const [loadedProfile, loadedStats] = await Promise.all([loadUserProfile(), loadStats()]);
-        setProfile(loadedProfile);
-        setStats(loadedStats);
-      } catch {
-        setHasError(true);
+    const unsubscribe = onAuthStateChanged((authUser) => {
+      setUser(authUser);
+      if (authUser) {
+        // Reload data when user changes
+        const init = async () => {
+          try {
+            const [loadedProfile, loadedStats] = await Promise.all([loadUserProfile(), loadStats()]);
+            setProfile(loadedProfile);
+            setStats(loadedStats);
+          } catch {
+            setHasError(true);
+          }
+        };
+        void init();
+      } else {
+        setProfile(null);
+        setStats(null);
       }
-    };
+    });
 
-    void init();
+    return unsubscribe;
   }, []);
 
   const handleChange = (key: keyof UserProfile, value: string) => {
@@ -59,27 +75,69 @@ export default function ProfileScreen({ navigation }: Props) {
     });
   };
 
-  const handleSave = async () => {
-    if (!profile) {
+  const handleAuth = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter email and password');
       return;
     }
-    const trimmedName = profile.displayName.trim();
-    const nextProfile: UserProfile = {
-      ...profile,
-      displayName: trimmedName || 'Guest',
-    };
-
-    setIsSaving(true);
-    setHasError(false);
+    setAuthLoading(true);
     try {
-      await saveUserProfile(nextProfile);
-      setProfile(nextProfile);
-    } catch {
-      setHasError(true);
+      if (isLogin) {
+        await signIn(email, password);
+      } else {
+        await signUp(email, password);
+      }
+      setEmail('');
+      setPassword('');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Authentication failed');
     } finally {
-      setIsSaving(false);
+      setAuthLoading(false);
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Logout failed');
+    }
+  };
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.authContainer}>
+            <Text style={styles.title}>{isLogin ? 'Login' : 'Sign Up'}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+            <PrimaryButton
+              title={isLogin ? 'Login' : 'Sign Up'}
+              onPress={handleAuth}
+              disabled={authLoading}
+            />
+            <Text style={styles.switchText} onPress={() => setIsLogin(!isLogin)}>
+              {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   if (!profile || !stats) {
     return (
@@ -107,9 +165,14 @@ export default function ProfileScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.headerRow}>
           <Text style={styles.screenTitle}>Your Profile</Text>
-          <Text style={styles.backLink} onPress={() => navigation.goBack()}>
-            Close
-          </Text>
+          <View style={styles.headerActions}>
+            <Text style={styles.logoutLink} onPress={handleLogout}>
+              Logout
+            </Text>
+            <Text style={styles.backLink} onPress={() => navigation.goBack()}>
+              Close
+            </Text>
+          </View>
         </View>
 
         <View style={styles.profileCard}>
@@ -351,6 +414,33 @@ const styles = StyleSheet.create({
   energyHint: {
     fontSize: 12,
     color: '#9ca3af',
+  },
+  authContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#f9fafb',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  switchText: {
+    fontSize: 14,
+    color: '#3b82f6',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  logoutLink: {
+    fontSize: 16,
+    color: '#ef4444',
+    textDecorationLine: 'underline',
   },
 });
 
