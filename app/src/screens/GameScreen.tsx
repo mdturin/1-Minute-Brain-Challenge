@@ -13,6 +13,7 @@ import { calculateScoreForAnswer } from '../logic/scoring';
 import MentalMathView from '../components/puzzles/MentalMathView';
 import MemorySequenceView from '../components/puzzles/MemorySequenceView';
 import LogicMiniView from '../components/puzzles/LogicMiniView';
+import PatternVisualView from '../components/puzzles/PatternVisualView';
 import { updateStats } from '../storage/stats';
 import { canShowInterstitialNow, showInterstitialWithCallbacks } from '../logic/ads';
 
@@ -127,6 +128,8 @@ export default function GameScreen({ navigation, route }: Props) {
         return <MemorySequenceView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       case 'logic_mini':
         return <LogicMiniView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'pattern_visual':
+        return <PatternVisualView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       default:
         return null;
     }
