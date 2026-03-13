@@ -1,21 +1,21 @@
 # 1 Minute Brain Challenge
 
-React Native + Expo mini-game where you have **60 seconds** to solve as many brain puzzles as possible.
+React Native + Expo mini-game where you have **1-3 minutes** (depending on difficulty) to solve as many brain puzzles as possible.
 
 ## Features
 
 - **Home screen**
   - Game title and short description.
-  - Button to start a new 1‑minute challenge.
+  - Button to start a new challenge (1-3 minutes based on difficulty).
   - Simple stats: best score, games played, average score.
 
 - **Puzzle screen**
-  - Endless stream of mini-puzzles for 60 seconds.
+  - Endless stream of mini-puzzles for 1-3 minutes (based on difficulty).
   - Visual countdown bar and remaining seconds text.
   - Live score and streak display.
 
 - **Timer system**
-  - 60‑second countdown with a shrinking progress bar.
+  - 1-3 minute countdown (based on difficulty) with a shrinking progress bar.
   - Color changes (green → yellow → red) as time runs out.
 
 - **Score system**
@@ -54,4 +54,3 @@ Then:
 
 - Press `w` to run on **web** in your browser, or
 - Use the **Expo Go** app on your phone to scan the QR code and play on a real device.
-

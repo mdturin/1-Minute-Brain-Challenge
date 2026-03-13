@@ -19,13 +19,11 @@ import { canShowInterstitialNow, showInterstitialWithCallbacks } from '../logic/
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
-const GAME_DURATION_SECONDS = 60;
-
 export default function GameScreen({ navigation, route }: Props) {
   const difficultyKey = route.params.difficulty;
   const difficultyConfig = DIFFICULTIES[difficultyKey];
 
-  const [remainingTime, setRemainingTime] = useState<number>(GAME_DURATION_SECONDS);
+  const [remainingTime, setRemainingTime] = useState<number>(difficultyConfig.durationSeconds);
   const [currentPuzzle, setCurrentPuzzle] = useState<Puzzle>(() => generateRandomPuzzle(difficultyKey));
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -34,7 +32,7 @@ export default function GameScreen({ navigation, route }: Props) {
   const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
-    setRemainingTime(GAME_DURATION_SECONDS);
+    setRemainingTime(difficultyConfig.durationSeconds);
     setScore(0);
     setStreak(0);
     setMaxStreak(0);
@@ -80,7 +78,7 @@ export default function GameScreen({ navigation, route }: Props) {
     }
 
     setScore((prev) => {
-      const remainingFraction = remainingTime / GAME_DURATION_SECONDS;
+      const remainingFraction = remainingTime / difficultyConfig.durationSeconds;
       const delta = calculateScoreForAnswer({
         puzzle: currentPuzzle,
         difficulty: difficultyKey,
@@ -116,8 +114,8 @@ export default function GameScreen({ navigation, route }: Props) {
   };
 
   const progress = useMemo(
-    () => remainingTime / GAME_DURATION_SECONDS,
-    [remainingTime]
+    () => remainingTime / difficultyConfig.durationSeconds,
+    [remainingTime, difficultyConfig.durationSeconds]
   );
 
   const renderPuzzle = () => {
