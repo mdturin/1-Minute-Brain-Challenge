@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, Modal } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View, Modal, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import TimerBar from '../components/TimerBar';
 import ScoreDisplay from '../components/ScoreDisplay';
-import PrimaryButton from '../components/PrimaryButton';
 import Card from '../components/Card';
+import PrimaryButton from '../components/PrimaryButton';
 import { generateRandomPuzzle, Puzzle } from '../logic/puzzles';
 import { DIFFICULTIES } from '../logic/difficulty';
 import { calculateScoreForAnswer } from '../logic/scoring';
@@ -13,6 +14,7 @@ import MentalMathView from '../components/puzzles/MentalMathView';
 import MemorySequenceView from '../components/puzzles/MemorySequenceView';
 import LogicMiniView from '../components/puzzles/LogicMiniView';
 import { updateStats } from '../storage/stats';
+import { canShowInterstitialNow, showInterstitialWithCallbacks } from '../logic/ads';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
@@ -100,8 +102,16 @@ export default function GameScreen({ navigation, route }: Props) {
   };
 
   const handleBackToHome = () => {
-    setShowSummary(false);
-    navigation.replace('Home');
+    const goHome = () => {
+      setShowSummary(false);
+      navigation.replace('Home');
+    };
+
+    if (canShowInterstitialNow()) {
+      showInterstitialWithCallbacks(goHome, goHome);
+    } else {
+      goHome();
+    }
   };
 
   const progress = useMemo(
@@ -125,6 +135,16 @@ export default function GameScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        <View style={styles.backButtonContainer}>
+          <TouchableOpacity
+            onPress={() => navigation.replace('Home')}
+            style={styles.backButton}
+            hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+          >
+            <Ionicons name="chevron-back" size={22} color="#e5e7eb" />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.topBar}>
           <Text style={styles.screenTitle}>1 Minute Brain Challenge</Text>
           <Text style={styles.difficultyBadge}>{difficultyConfig.label}</Text>
@@ -166,6 +186,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     backgroundColor: '#050816',
+  },
+  backButtonContainer: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
   },
   topBar: {
     marginBottom: 12,
