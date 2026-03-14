@@ -7,28 +7,20 @@ import { getDatabase } from "firebase/database";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// TODO: Add SDKs for Firebase products that you want to use
-
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-
 const firebaseConfig = {
-  apiKey: "AIzaSyCg8CjmsNN2pQdvHDwzooG1_ve_o5-7VQA",
+  apiKey: "",
 
-  authDomain: "minute-brain-challange.firebaseapp.com",
+  authDomain: "",
 
-  projectId: "minute-brain-challange",
+  projectId: "",
 
-  storageBucket: "minute-brain-challange.firebasestorage.app",
+  storageBucket: "",
 
-  messagingSenderId: "1097445883559",
+  messagingSenderId: "",
 
-  appId: "1:1097445883559:web:cb4f26e8c549a8d591e582",
+  appId: "",
 
-  measurementId: "G-B8XJHQ1FMC",
+  measurementId: "",
 };
 
 // Initialize Firebase
