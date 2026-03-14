@@ -20,6 +20,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
 
   const { energy, maxEnergy, isLoading: energyLoading } = useEnergy();
 
@@ -76,10 +77,16 @@ export default function ProfileScreen({ navigation }: Props) {
   };
 
   const handleAuth = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setAuthError('Please enter a valid email address');
       return;
     }
+    if (!password || password.length < 8) {
+      setAuthError('Password must be at least 8 characters long');
+      return;
+    }
+    setAuthError('');
     setAuthLoading(true);
     try {
       if (isLogin) {
@@ -89,8 +96,9 @@ export default function ProfileScreen({ navigation }: Props) {
       }
       setEmail('');
       setPassword('');
+      setAuthError('');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Authentication failed');
+      setAuthError(error.message || 'Authentication failed');
     } finally {
       setAuthLoading(false);
     }
@@ -144,11 +152,14 @@ export default function ProfileScreen({ navigation }: Props) {
               secureTextEntry
               placeholderTextColor="#6b7280"
             />
-            <PrimaryButton
-              label={authLoading ? (isLogin ? 'Logging in…' : 'Signing up…') : isLogin ? 'Login' : 'Sign Up'}
-              onPress={handleAuth}
-              disabled={authLoading}
-            />
+            {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+            <View style={{marginTop: 16}}>
+              <PrimaryButton
+                label={authLoading ? (isLogin ? 'Logging in…' : 'Signing up…') : isLogin ? 'Login' : 'Sign Up'}
+                onPress={handleAuth}
+                disabled={authLoading}
+              />
+            </View>
             <Text style={styles.switchText} onPress={() => setIsLogin(!isLogin)}>
               {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
             </Text>
@@ -393,6 +404,7 @@ const styles = StyleSheet.create({
     color: '#f9fafb',
     fontSize: 14,
     backgroundColor: '#020617',
+    marginBottom: 12,
   },
   saveButton: {
     marginTop: 4,

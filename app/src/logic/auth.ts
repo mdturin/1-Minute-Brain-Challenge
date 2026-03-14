@@ -17,34 +17,54 @@ export const signUp = async (
   email: string,
   password: string,
 ): Promise<AuthUser> => {
-  const userCredential = await createUserWithEmailAndPassword(
-    auth,
-    email,
-    password,
-  );
-  await migrateLocalDataToCloud();
-  return {
-    uid: userCredential.user.uid,
-    email: userCredential.user.email,
-    displayName: userCredential.user.displayName,
-  };
+  try {
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
+    try {
+      await migrateLocalDataToCloud();
+    } catch (migrationError) {
+      console.warn("Migration failed after sign up:", migrationError);
+      // Continue anyway, as user is created
+    }
+    return {
+      uid: userCredential.user.uid,
+      email: userCredential.user.email,
+      displayName: userCredential.user.displayName,
+    };
+  } catch (error) {
+    console.error("Sign up failed:", error);
+    throw error;
+  }
 };
 
 export const signIn = async (
   email: string,
   password: string,
 ): Promise<AuthUser> => {
-  const userCredential = await signInWithEmailAndPassword(
-    auth,
-    email,
-    password,
-  );
-  await migrateLocalDataToCloud();
-  return {
-    uid: userCredential.user.uid,
-    email: userCredential.user.email,
-    displayName: userCredential.user.displayName,
-  };
+  try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
+    try {
+      await migrateLocalDataToCloud();
+    } catch (migrationError) {
+      console.warn("Migration failed after sign in:", migrationError);
+      // Continue anyway
+    }
+    return {
+      uid: userCredential.user.uid,
+      email: userCredential.user.email,
+      displayName: userCredential.user.displayName,
+    };
+  } catch (error) {
+    console.error("Sign in failed:", error);
+    throw error;
+  }
 };
 
 export const signOut = async (): Promise<void> => {
