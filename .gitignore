@@ -49,3 +49,7 @@ coverage/
 *.tgz
 *.zip
 
+# Environment variables
+.env
+app/.env
+
