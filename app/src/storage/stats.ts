@@ -27,13 +27,16 @@ export async function loadStats(): Promise<GameStats> {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         return docSnap.data() as GameStats;
+      } else {
+        return defaultStats;
       }
     } catch (error) {
       console.error("Error loading stats from Firestore:", error);
+      throw error;
     }
   }
 
-  // Fallback to local storage
+  // Fallback to local storage for guests
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -69,10 +72,11 @@ export async function updateStats(params: {
       return;
     } catch (error) {
       console.error("Error saving stats to Firestore:", error);
+      throw error;
     }
   }
 
-  // Fallback to local storage
+  // Fallback to local storage for guests
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {

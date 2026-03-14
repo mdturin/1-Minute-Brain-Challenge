@@ -34,13 +34,16 @@ export async function loadEnergyState(
               ? data.lastUpdatedAt
               : base.lastUpdatedAt,
         };
+      } else {
+        return createDefaultEnergyState(now);
       }
     } catch (error) {
       console.error("Error loading energy from Firestore:", error);
+      throw error;
     }
   }
 
-  // Fallback to local storage
+  // Fallback to local storage for guests
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -70,10 +73,11 @@ export async function saveEnergyState(state: EnergyState): Promise<void> {
       return;
     } catch (error) {
       console.error("Error saving energy to Firestore:", error);
+      throw error;
     }
   }
 
-  // Fallback to local storage
+  // Fallback to local storage for guests
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {

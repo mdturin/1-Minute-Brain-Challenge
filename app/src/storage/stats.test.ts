@@ -1,9 +1,34 @@
 /// <reference types="jest" />
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadStats, updateStats, type GameStats } from './stats';
+// Mock Firebase Analytics to avoid window issues
+jest.mock("firebase/analytics", () => ({
+  getAnalytics: jest.fn(() => ({})),
+}));
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
+// Mock Firebase App
+jest.mock("firebase/app", () => ({
+  initializeApp: jest.fn(() => ({})),
+}));
+
+// Mock Firebase Firestore
+jest.mock("firebase/firestore", () => ({
+  getFirestore: jest.fn(),
+  doc: jest.fn(),
+  getDoc: jest.fn(),
+  setDoc: jest.fn(),
+}));
+
+// Mock Firebase Auth
+jest.mock("firebase/auth", () => ({
+  getAuth: jest.fn(() => ({
+    currentUser: null,
+  })),
+}));
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { loadStats, updateStats, type GameStats } from "./stats";
+
+jest.mock("@react-native-async-storage/async-storage", () => ({
   __esModule: true,
   default: {
     getItem: jest.fn(),
@@ -16,13 +41,13 @@ const mockedStorage = AsyncStorage as unknown as {
   setItem: jest.Mock;
 };
 
-describe('stats storage', () => {
+describe("stats storage", () => {
   beforeEach(() => {
     mockedStorage.getItem.mockReset();
     mockedStorage.setItem.mockReset();
   });
 
-  test('loadStats returns defaults when nothing stored', async () => {
+  test("loadStats returns defaults when nothing stored", async () => {
     mockedStorage.getItem.mockResolvedValueOnce(null);
     const stats = await loadStats();
 
@@ -30,7 +55,7 @@ describe('stats storage', () => {
     expect(stats.gamesPlayed).toBe(0);
   });
 
-  test('loadStats merges stored values with defaults', async () => {
+  test("loadStats merges stored values with defaults", async () => {
     const partial: Partial<GameStats> = { bestScore: 10 };
     mockedStorage.getItem.mockResolvedValueOnce(JSON.stringify(partial));
 
@@ -39,7 +64,7 @@ describe('stats storage', () => {
     expect(stats.gamesPlayed).toBe(0);
   });
 
-  test('updateStats bumps counters and bests', async () => {
+  test("updateStats bumps counters and bests", async () => {
     const current: GameStats = {
       bestScore: 20,
       gamesPlayed: 3,
@@ -59,4 +84,3 @@ describe('stats storage', () => {
     expect(next.bestStreak).toBe(5);
   });
 });
-

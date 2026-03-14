@@ -21,6 +21,9 @@ export function useEnergy(): UseEnergyResult {
     try {
       const state = await loadAndRefillEnergy(Date.now());
       setEnergy(state.current);
+    } catch (error) {
+      console.error("Error loading energy:", error);
+      setEnergy(MAX_ENERGY); // fallback to max on error
     } finally {
       setIsLoading(false);
     }

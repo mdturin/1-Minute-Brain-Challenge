@@ -69,7 +69,12 @@ export default function GameScreen({ navigation, route }: Props) {
     }
     setStatus('finished');
     setShowSummary(true);
-    await updateStats({ lastScore: score, lastMaxStreak: maxStreak });
+    try {
+      await updateStats({ lastScore: score, lastMaxStreak: maxStreak });
+    } catch (error) {
+      console.error("Error updating stats:", error);
+      // Continue without saving stats
+    }
   };
 
   const handleAnswer = (isCorrect: boolean) => {

@@ -25,13 +25,16 @@ export async function loadUserProfile(): Promise<UserProfile> {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         return docSnap.data() as UserProfile;
+      } else {
+        return defaultProfile;
       }
     } catch (error) {
       console.error("Error loading profile from Firestore:", error);
+      throw error;
     }
   }
 
-  // Fallback to local storage
+  // Fallback to local storage for guests
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -58,10 +61,11 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
       return;
     } catch (error) {
       console.error("Error saving profile to Firestore:", error);
+      throw error;
     }
   }
 
-  // Fallback to local storage
+  // Fallback to local storage for guests
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
   } catch {
