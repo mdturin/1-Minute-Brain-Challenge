@@ -4,14 +4,18 @@ import { StatusBar } from 'expo-status-bar';
 import HomeScreen from './src/screens/HomeScreen';
 import GameScreen from './src/screens/GameScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import './src/logic/firebaseConfig'; // Initialize Firebase
 
 export type RootStackParamList = {
+  Onboarding: undefined;
   Home: undefined;
   Game: {
     difficulty: 'easy' | 'medium' | 'hard';
   };
   Profile: undefined;
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -24,11 +28,14 @@ export default function App() {
         initialRouteName="Home"
         screenOptions={{
           headerShown: false,
+          animation: 'fade',
         }}
       >
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Game" component={GameScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

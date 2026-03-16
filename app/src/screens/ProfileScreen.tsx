@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, Alert } from 'react-native';
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, Alert, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { loadUserProfile, saveUserProfile, type UserProfile } from '../storage/userProfile';
@@ -7,6 +7,7 @@ import { loadStats, type GameStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
 import PrimaryButton from '../components/PrimaryButton';
 import { signIn, signUp, signOut, onAuthStateChanged, type AuthUser } from '../logic/auth';
+import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -28,7 +29,6 @@ export default function ProfileScreen({ navigation }: Props) {
     const unsubscribe = onAuthStateChanged((authUser) => {
       setUser(authUser);
       if (authUser) {
-        // Reload data when user changes
         const init = async () => {
           try {
             const [loadedProfile, loadedStats] = await Promise.all([loadUserProfile(), loadStats()]);
@@ -44,34 +44,18 @@ export default function ProfileScreen({ navigation }: Props) {
         setStats(null);
       }
     });
-
     return unsubscribe;
   }, []);
 
   const handleChange = (key: keyof UserProfile, value: string) => {
     setProfile((current) => {
-      if (!current) {
-        return current;
-      }
+      if (!current) return current;
       if (key === 'age') {
         const numeric = value.replace(/[^0-9]/g, '');
-        return {
-          ...current,
-          age: numeric.length ? Number(numeric) : undefined,
-        };
+        return { ...current, age: numeric.length ? Number(numeric) : undefined };
       }
-      if (key === 'country') {
-        return {
-          ...current,
-          country: value.trim() || undefined,
-        };
-      }
-      if (key === 'displayName') {
-        return {
-          ...current,
-          displayName: value,
-        };
-      }
+      if (key === 'country') return { ...current, country: value.trim() || undefined };
+      if (key === 'displayName') return { ...current, displayName: value };
       return current;
     });
   };
@@ -83,7 +67,7 @@ export default function ProfileScreen({ navigation }: Props) {
       return;
     }
     if (!password || password.length < 8) {
-      setAuthError('Password must be at least 8 characters long');
+      setAuthError('Password must be at least 8 characters');
       return;
     }
     setAuthError('');
@@ -114,10 +98,8 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const handleSave = async () => {
     if (!profile) return;
-
     setIsSaving(true);
     setHasError(false);
-
     try {
       await saveUserProfile(profile);
     } catch (error: any) {
@@ -128,53 +110,84 @@ export default function ProfileScreen({ navigation }: Props) {
     }
   };
 
+  // Guest / Auth screen
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={[styles.scrollContent, styles.authScrollContent]}>
+        <ScrollView contentContainerStyle={styles.authScroll}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={22} color="#e5e7eb" />
+          </TouchableOpacity>
+
           <View style={styles.authContainer}>
-            <Text style={styles.title}>{isLogin ? 'Login' : 'Sign Up'}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholderTextColor="#6b7280"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholderTextColor="#6b7280"
-            />
-            {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
-            <View style={{marginTop: 16}}>
-              <PrimaryButton
-                label={authLoading ? (isLogin ? 'Logging in…' : 'Signing up…') : isLogin ? 'Login' : 'Sign Up'}
-                onPress={handleAuth}
-                disabled={authLoading}
-              />
+            <View style={styles.authIconCircle}>
+              <Ionicons name="person" size={36} color="#a5b4fc" />
             </View>
-            <Text style={styles.switchText} onPress={() => setIsLogin(!isLogin)}>
-              {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
+            <Text style={styles.authTitle}>
+              {isLogin ? 'Welcome Back' : 'Create Account'}
             </Text>
+            <Text style={styles.authSubtitle}>
+              {isLogin ? 'Sign in to sync your progress' : 'Save your scores across devices'}
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={18} color="#64748b" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholderTextColor="#475569"
+                />
+              </View>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={18} color="#64748b" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  placeholderTextColor="#475569"
+                />
+              </View>
+            </View>
+
+            {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+
+            <TouchableOpacity
+              style={[styles.authButton, authLoading && styles.authButtonDisabled]}
+              onPress={handleAuth}
+              disabled={authLoading}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.authButtonText}>
+                {authLoading ? (isLogin ? 'Signing in...' : 'Creating account...') : isLogin ? 'Sign In' : 'Create Account'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+              <Text style={styles.switchText}>
+                {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
     );
   }
 
+  // Loading state
   if (!profile || !stats) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator color="#ffffff" />
-          {hasError && <Text style={styles.errorText}>Unable to load profile right now.</Text>}
+          <ActivityIndicator color="#a5b4fc" size="large" />
+          {hasError && <Text style={styles.errorText}>Unable to load profile.</Text>}
         </View>
       </SafeAreaView>
     );
@@ -187,117 +200,112 @@ export default function ProfileScreen({ navigation }: Props) {
     .slice(0, 2)
     .join('') || 'G';
 
-  const averageScore =
-    stats.gamesPlayed > 0 ? Math.round(stats.totalScore / stats.gamesPlayed) : 0;
+  const averageScore = stats.gamesPlayed > 0 ? Math.round(stats.totalScore / stats.gamesPlayed) : 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.headerRow}>
-          <Text style={styles.screenTitle}>Your Profile</Text>
-          <View style={styles.headerActions}>
-            <Text style={styles.logoutLink} onPress={handleLogout}>
-              Logout
-            </Text>
-            <Text style={styles.backLink} onPress={() => navigation.goBack()}>
-              Close
-            </Text>
-          </View>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={22} color="#e5e7eb" />
+          </TouchableOpacity>
+          <Text style={styles.screenTitle}>Profile</Text>
+          <TouchableOpacity onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={22} color="#ef4444" />
+          </TouchableOpacity>
         </View>
 
+        {/* Avatar Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
-          <View style={styles.profileSummaryText}>
-            <Text style={styles.profileName}>{profile.displayName || 'Guest'}</Text>
-            {profile.country && (
-              <Text style={styles.profileMeta}>Country: {profile.country}</Text>
-            )}
-            {typeof profile.age === 'number' && (
-              <Text style={styles.profileMeta}>Age: {profile.age}</Text>
-            )}
-          </View>
+          <Text style={styles.profileName}>{profile.displayName || 'Guest'}</Text>
+          {user.email && <Text style={styles.profileEmail}>{user.email}</Text>}
         </View>
 
+        {/* Edit Profile */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Info</Text>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Display name</Text>
+          <Text style={styles.sectionTitle}>Edit Profile</Text>
+          <View style={styles.inputWrapper}>
+            <Ionicons name="person-outline" size={18} color="#64748b" />
             <TextInput
               style={styles.input}
-              placeholder="Your name"
-              placeholderTextColor="#6b7280"
+              placeholder="Display name"
+              placeholderTextColor="#475569"
               value={profile.displayName}
               onChangeText={(text) => handleChange('displayName', text)}
             />
           </View>
           <View style={styles.fieldRow}>
-            <View style={[styles.fieldGroup, styles.fieldHalf]}>
-              <Text style={styles.fieldLabel}>Age</Text>
+            <View style={[styles.inputWrapper, { flex: 1 }]}>
+              <Ionicons name="calendar-outline" size={18} color="#64748b" />
               <TextInput
                 style={styles.input}
-                placeholder="18"
-                placeholderTextColor="#6b7280"
+                placeholder="Age"
+                placeholderTextColor="#475569"
                 keyboardType="number-pad"
                 value={typeof profile.age === 'number' ? String(profile.age) : ''}
                 onChangeText={(text) => handleChange('age', text)}
               />
             </View>
-            <View style={[styles.fieldGroup, styles.fieldHalf]}>
-              <Text style={styles.fieldLabel}>Country</Text>
+            <View style={[styles.inputWrapper, { flex: 1 }]}>
+              <Ionicons name="globe-outline" size={18} color="#64748b" />
               <TextInput
                 style={styles.input}
                 placeholder="Country"
-                placeholderTextColor="#6b7280"
+                placeholderTextColor="#475569"
                 value={profile.country ?? ''}
                 onChangeText={(text) => handleChange('country', text)}
               />
             </View>
           </View>
-          {hasError && (
-            <Text style={styles.errorText}>Couldn&apos;t save profile changes. Please try again.</Text>
-          )}
+          {hasError && <Text style={styles.errorText}>Could not save changes.</Text>}
           <PrimaryButton
-            label={isSaving ? 'Saving...' : 'Save profile'}
+            label={isSaving ? 'Saving...' : 'Save Profile'}
             onPress={handleSave}
             disabled={isSaving}
-            style={styles.saveButton}
           />
         </View>
 
+        {/* Stats */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Lifetime Stats</Text>
-          <View style={styles.statsRow}>
+          <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Best Score</Text>
+              <Ionicons name="trophy-outline" size={20} color="#eab308" />
               <Text style={styles.statValue}>{stats.bestScore}</Text>
+              <Text style={styles.statLabel}>Best Score</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Games Played</Text>
+              <Ionicons name="game-controller-outline" size={20} color="#60a5fa" />
               <Text style={styles.statValue}>{stats.gamesPlayed}</Text>
+              <Text style={styles.statLabel}>Games</Text>
             </View>
-          </View>
-          <View style={styles.statsRow}>
             <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Best Streak</Text>
+              <Ionicons name="flame-outline" size={20} color="#ef4444" />
               <Text style={styles.statValue}>{stats.bestStreak}</Text>
+              <Text style={styles.statLabel}>Best Streak</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Avg Score</Text>
+              <Ionicons name="stats-chart-outline" size={20} color="#22c55e" />
               <Text style={styles.statValue}>{averageScore}</Text>
+              <Text style={styles.statLabel}>Avg Score</Text>
             </View>
           </View>
         </View>
 
+        {/* Energy */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Energy</Text>
-          <Text style={styles.energyText}>
-            {energyLoading ? 'Loading energy...' : `Current energy: ${energy} / ${maxEnergy}`}
-          </Text>
-          <Text style={styles.energyHint}>
-            Energy refills over time and can be boosted by watching rewarded ads on the home screen.
-          </Text>
+          <View style={styles.energyRow}>
+            <Ionicons name="flash" size={20} color="#a5b4fc" />
+            <Text style={styles.energyText}>
+              {energyLoading ? 'Loading...' : `${energy} / ${maxEnergy}`}
+            </Text>
+          </View>
+          <Text style={styles.energyHint}>Refills 10 per hour. Watch ads on the home screen for bonus energy.</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -310,176 +318,213 @@ const styles = StyleSheet.create({
     backgroundColor: '#050816',
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
   },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#050816',
-  },
-  screenTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#f9fafb',
-  },
-  backLink: {
-    fontSize: 14,
-    color: '#a5b4fc',
+    gap: 12,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#111827',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-  },
-  avatarCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#4f46e5',
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    backgroundColor: 'rgba(15,23,42,0.9)',
   },
-  avatarText: {
-    fontSize: 22,
+  screenTitle: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#f9fafb',
   },
-  profileSummaryText: {
-    flex: 1,
+  profileCard: {
+    alignItems: 'center',
+    backgroundColor: '#111827',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(165,180,252,0.1)',
   },
-  profileName: {
-    fontSize: 18,
-    fontWeight: '600',
+  avatarCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#4f46e5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  avatarText: {
+    fontSize: 28,
+    fontWeight: '800',
     color: '#f9fafb',
   },
-  profileMeta: {
-    marginTop: 4,
+  profileName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#f9fafb',
+  },
+  profileEmail: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: '#64748b',
+    marginTop: 4,
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#e5e7eb',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: 12,
   },
-  fieldGroup: {
-    marginBottom: 12,
+  inputGroup: {
+    gap: 12,
+    marginBottom: 16,
+    width: '100%',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.2)',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    color: '#f9fafb',
+    fontSize: 15,
+    paddingVertical: 10,
   },
   fieldRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  fieldHalf: {
-    flex: 1,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    color: '#9ca3af',
-    marginBottom: 4,
-  },
-  input: {
-    width: '100%',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.6)',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    color: '#f9fafb',
-    fontSize: 14,
-    backgroundColor: '#020617',
-    marginBottom: 12,
-  },
-  saveButton: {
-    marginTop: 4,
+    gap: 10,
   },
   errorText: {
-    marginTop: 4,
     fontSize: 12,
     color: '#fbbf24',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
     marginBottom: 8,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#111827',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  statLabel: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginBottom: 4,
+  statCard: {
+    width: '47%',
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    gap: 6,
   },
   statValue: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#f9fafb',
   },
+  statLabel: {
+    fontSize: 11,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  energyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#111827',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
   energyText: {
-    fontSize: 14,
-    color: '#e5e7eb',
-    marginBottom: 4,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#a5b4fc',
   },
   energyHint: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: '#64748b',
+  },
+  // Auth screen styles
+  authScroll: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
   authContainer: {
-    width: '100%',
-    maxWidth: 420,
-    alignSelf: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  authScrollContent: {
-    flexGrow: 1,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    maxWidth: 400,
+    alignSelf: 'center',
+    width: '100%',
+    paddingBottom: 40,
   },
-  title: {
+  authIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(165,180,252,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(165,180,252,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  authTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#f9fafb',
+    marginBottom: 6,
+  },
+  authSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 24,
     textAlign: 'center',
-    marginBottom: 20,
+  },
+  authButton: {
+    backgroundColor: '#6366f1',
+    paddingVertical: 14,
+    borderRadius: 14,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  authButtonDisabled: {
+    backgroundColor: '#374151',
+  },
+  authButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
   },
   switchText: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#6366f1',
     textAlign: 'center',
-    marginTop: 10,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  logoutLink: {
-    fontSize: 16,
-    color: '#ef4444',
-    textDecorationLine: 'underline',
   },
 });
-

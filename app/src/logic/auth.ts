@@ -17,6 +17,7 @@ export const signUp = async (
   email: string,
   password: string,
 ): Promise<AuthUser> => {
+  if (!auth) throw new Error("Firebase is not configured");
   try {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -44,6 +45,7 @@ export const signIn = async (
   email: string,
   password: string,
 ): Promise<AuthUser> => {
+  if (!auth) throw new Error("Firebase is not configured");
   try {
     const userCredential = await signInWithEmailAndPassword(
       auth,
@@ -68,10 +70,12 @@ export const signIn = async (
 };
 
 export const signOut = async (): Promise<void> => {
+  if (!auth) return;
   await firebaseSignOut(auth);
 };
 
 export const getCurrentUser = (): AuthUser | null => {
+  if (!auth) return null;
   const user = auth.currentUser;
   if (user) {
     return {
@@ -86,6 +90,10 @@ export const getCurrentUser = (): AuthUser | null => {
 export const onAuthStateChanged = (
   callback: (user: AuthUser | null) => void,
 ) => {
+  if (!auth) {
+    callback(null);
+    return () => {};
+  }
   return onFirebaseAuthStateChanged(auth, (user) => {
     if (user) {
       callback({

@@ -24,12 +24,21 @@ const firebaseConfig = {
   measurementId: env("FIREBASE_MEASUREMENT_ID"),
 };
 
-// Initialize Firebase
+// Initialize Firebase – gracefully handle missing config (e.g. local dev without .env)
 
-export const app = initializeApp(firebaseConfig);
+const hasConfig = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 
-export const auth = getAuth(app);
+export const app = hasConfig ? initializeApp(firebaseConfig) : null;
 
-export const analytics = getAnalytics(app);
+export const auth = app ? getAuth(app) : null;
 
-export const db = getFirestore(app);
+export const analytics = (() => {
+  if (!app) return null;
+  try {
+    return getAnalytics(app);
+  } catch {
+    return null;
+  }
+})();
+
+export const db = app ? getFirestore(app) : null;
