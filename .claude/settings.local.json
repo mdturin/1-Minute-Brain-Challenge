@@ -10,7 +10,10 @@
       "Bash(ls \"E:/Project/1 Minute Brain Challenge/app/node_modules/.bin/\"expo*)",
       "Bash(where node:*)",
       "Bash(npm install:*)",
-      "Bash(node node_modules/expo/bin/cli start --help)"
+      "Bash(node node_modules/expo/bin/cli start --help)",
+      "Bash(gh pr:*)",
+      "Bash(where gh:*)",
+      "Bash(winget list:*)"
     ]
   }
 }
