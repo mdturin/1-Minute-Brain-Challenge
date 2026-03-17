@@ -1,5 +1,38 @@
 /// <reference types="jest" />
 
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: ({ children, ...props }: any) => {
+    const React = require('react');
+    const { View } = require('react-native');
+    return React.createElement(View, props, children);
+  },
+  SafeAreaProvider: ({ children, ...props }: any) => {
+    const React = require('react');
+    const { View } = require('react-native');
+    return React.createElement(View, props, children);
+  },
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+
+// Mock expo-font to prevent font download in tests
+jest.mock('expo-font', () => ({
+  loadAsync: jest.fn(),
+  isLoaded: jest.fn(() => true),
+  isLoading: jest.fn(() => false),
+}));
+
+// Mock @expo/vector-icons to avoid font loading entirely
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  const MockIcon = (props: any) => React.createElement(Text, props, props.name);
+  return {
+    Ionicons: MockIcon,
+    MaterialCommunityIcons: MockIcon,
+    __esModule: true,
+  };
+});
+
 // Mock Firebase Analytics to avoid window issues
 jest.mock('firebase/analytics', () => ({
   getAnalytics: jest.fn(() => ({})),
@@ -77,7 +110,7 @@ const mockUseEnergy = useEnergy as jest.Mock;
 // SKIPPED: React 19 + RN 0.83 deprecated SafeAreaView causes "instanceof is not callable"
 // in test renderer. Fix: migrate ProfileScreen to react-native-safe-area-context's SafeAreaView.
 // See: https://github.com/facebook/react-native/issues/48392
-describe.skip('ProfileScreen', () => {
+describe('ProfileScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseEnergy.mockReturnValue({
@@ -107,15 +140,17 @@ describe.skip('ProfileScreen', () => {
     });
 
     test('switches to sign up form', () => {
-      const { getByText } = render(
+      const { getAllByText } = render(
         <ProfileScreen navigation={mockNavigation} route={{} as any} />,
       );
 
-      // The toggle text is split across styled Text components;
-      // getByText matches partial nested text in React Native
-      fireEvent.press(getByText(/Sign Up/));
+      // Press the toggle link (contains "Sign Up" text)
+      const signUpLinks = getAllByText(/Sign Up/);
+      fireEvent.press(signUpLinks[0]);
 
-      expect(getByText('Create Account')).toBeTruthy();
+      // After switching, "Create Account" appears (title + button)
+      const createAccountElements = getAllByText('Create Account');
+      expect(createAccountElements.length).toBeGreaterThanOrEqual(1);
     });
 
     test('validates email on submit', async () => {
@@ -173,16 +208,18 @@ describe.skip('ProfileScreen', () => {
     test('calls signUp on valid sign up', async () => {
       mockSignUp.mockResolvedValue({ uid: '123', email: 'test@example.com' });
 
-      const { getByText, getByPlaceholderText } = render(
+      const { getAllByText, getByPlaceholderText } = render(
         <ProfileScreen navigation={mockNavigation} route={{} as any} />,
       );
 
       // Switch to sign up
-      fireEvent.press(getByText(/Sign Up/));
+      fireEvent.press(getAllByText(/Sign Up/)[0]);
 
       fireEvent.changeText(getByPlaceholderText('Email address'), 'test@example.com');
       fireEvent.changeText(getByPlaceholderText('Password (min. 8 characters)'), 'password123');
-      fireEvent.press(getByText('Create Account'));
+      // "Create Account" appears as both title and button — press the button (last one)
+      const createBtns = getAllByText('Create Account');
+      fireEvent.press(createBtns[createBtns.length - 1]);
 
       await waitFor(() => {
         expect(mockSignUp).toHaveBeenCalledWith('test@example.com', 'password123');
