@@ -10,3 +10,15 @@ export function showRewardedWithCallbacks(_onReward: () => void, _onClosed?: () 
   onFailed?.();
 }
 
+export async function getDailyRewardedCount(): Promise<number> {
+  return 0;
+}
+
+export async function incrementDailyRewardedCount(): Promise<void> {}
+
+export async function canWatchRewardedToday(): Promise<boolean> {
+  return false;
+}
+
+export const REWARDED_DAILY_LIMIT = 5;
+

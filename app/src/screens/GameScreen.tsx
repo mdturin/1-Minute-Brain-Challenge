@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, Modal, TouchableOpacity, Animated } from 'react-native';
+import BannerAd from '../components/BannerAd';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
@@ -156,14 +157,21 @@ export default function GameScreen({ navigation, route }: Props) {
   };
 
   const handlePlayAgain = () => {
-    setShowSummary(false);
-    setRemainingTime(difficultyConfig.durationSeconds);
-    setScore(0);
-    setStreak(0);
-    setMaxStreak(0);
-    setPuzzlesSolved(0);
-    setStatus('playing');
-    setCurrentPuzzle(generateRandomPuzzle(difficultyKey));
+    const resetAndPlay = () => {
+      setShowSummary(false);
+      setRemainingTime(difficultyConfig.durationSeconds);
+      setScore(0);
+      setStreak(0);
+      setMaxStreak(0);
+      setPuzzlesSolved(0);
+      setStatus('playing');
+      setCurrentPuzzle(generateRandomPuzzle(difficultyKey));
+    };
+    if (canShowInterstitialNow()) {
+      showInterstitialWithCallbacks(resetAndPlay, resetAndPlay);
+    } else {
+      resetAndPlay();
+    }
   };
 
   const progress = useMemo(
@@ -270,6 +278,9 @@ export default function GameScreen({ navigation, route }: Props) {
             </View>
           </View>
         </View>
+
+        {/* Banner Ad */}
+        <BannerAd />
 
         {/* Game Over Modal */}
         <Modal transparent visible={showSummary} animationType="fade">
