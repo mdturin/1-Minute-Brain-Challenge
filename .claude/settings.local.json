@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"firebaseConfig\\\\|firebase is not configured\\\\|firebase config\" 'E:\\\\Project\\\\1 Minute Brain Challenge\\\\.claude\\\\worktrees\\\\reverent-wilbur\\\\app\\\\src' --include=*.ts --include=*.tsx --include=*.js)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npx:*)",
+      "Bash(where npm:*)",
+      "Bash(ls \"E:/Project/1 Minute Brain Challenge/.claude/worktrees/reverent-wilbur/app/node_modules/.bin/expo\"*)",
+      "Bash(ls \"E:/Project/1 Minute Brain Challenge/.claude/worktrees/reverent-wilbur/app/node_modules/.bin/\"expo*)",
+      "Bash(ls \"E:/Project/1 Minute Brain Challenge/app/node_modules/.bin/\"expo*)",
+      "Bash(where node:*)",
+      "Bash(npm install:*)",
+      "Bash(node node_modules/expo/bin/cli start --help)"
+    ]
+  }
+}
