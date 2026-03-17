@@ -1,15 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View, Alert, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { loadUserProfile, saveUserProfile, type UserProfile } from '../storage/userProfile';
 import { loadStats, type GameStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
 import PrimaryButton from '../components/PrimaryButton';
-import { signIn, signUp, signOut, onAuthStateChanged, type AuthUser } from '../logic/auth';
+import { signIn, signUp, signOut, onAuthStateChanged, resetPassword, type AuthUser } from '../logic/auth';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
+
+// Map Firebase error codes to friendly messages
+function getFriendlyAuthError(error: any): string {
+  const code: string = error?.code ?? '';
+  switch (code) {
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/user-not-found':
+      return 'No account found with this email.';
+    case 'auth/wrong-password':
+      return 'Incorrect password. Please try again.';
+    case 'auth/email-already-in-use':
+      return 'An account with this email already exists.';
+    case 'auth/weak-password':
+      return 'Password must be at least 8 characters.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please try again later.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection.';
+    case 'auth/invalid-credential':
+      return 'Incorrect email or password.';
+    default:
+      return error?.message || 'Authentication failed. Please try again.';
+  }
+}
 
 export default function ProfileScreen({ navigation }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -22,6 +47,9 @@ export default function ProfileScreen({ navigation }: Props) {
   const [isLogin, setIsLogin] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const { energy, maxEnergy, isLoading: energyLoading } = useEnergy();
 
@@ -63,11 +91,11 @@ export default function ProfileScreen({ navigation }: Props) {
   const handleAuth = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
-      setAuthError('Please enter a valid email address');
+      setAuthError('Please enter a valid email address.');
       return;
     }
     if (!password || password.length < 8) {
-      setAuthError('Password must be at least 8 characters');
+      setAuthError('Password must be at least 8 characters.');
       return;
     }
     setAuthError('');
@@ -82,9 +110,27 @@ export default function ProfileScreen({ navigation }: Props) {
       setPassword('');
       setAuthError('');
     } catch (error: any) {
-      setAuthError(error.message || 'Authentication failed');
+      setAuthError(getFriendlyAuthError(error));
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setAuthError('Enter your email above to reset your password.');
+      return;
+    }
+    setResetLoading(true);
+    setAuthError('');
+    try {
+      await resetPassword(email);
+      setResetSent(true);
+    } catch (error: any) {
+      setAuthError(getFriendlyAuthError(error));
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -114,30 +160,38 @@ export default function ProfileScreen({ navigation }: Props) {
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.authScroll}>
+        <ScrollView contentContainerStyle={styles.authScroll} keyboardShouldPersistTaps="handled">
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={22} color="#e5e7eb" />
           </TouchableOpacity>
 
           <View style={styles.authContainer}>
-            <View style={styles.authIconCircle}>
-              <Ionicons name="person" size={36} color="#a5b4fc" />
+            {/* Branding */}
+            <View style={styles.authBranding}>
+              <View style={styles.authIconCircle}>
+                <Ionicons name="flash" size={32} color="#a5b4fc" />
+              </View>
+              <Text style={styles.authAppName}>Brain Challenge</Text>
             </View>
+
             <Text style={styles.authTitle}>
               {isLogin ? 'Welcome Back' : 'Create Account'}
             </Text>
             <Text style={styles.authSubtitle}>
-              {isLogin ? 'Sign in to sync your progress' : 'Save your scores across devices'}
+              {isLogin
+                ? 'Sign in to sync your scores across devices'
+                : 'Save your progress and compete across devices'}
             </Text>
 
+            {/* Inputs */}
             <View style={styles.inputGroup}>
               <View style={styles.inputWrapper}>
                 <Ionicons name="mail-outline" size={18} color="#64748b" />
                 <TextInput
                   style={styles.input}
-                  placeholder="Email"
+                  placeholder="Email address"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => { setEmail(text); setAuthError(''); setResetSent(false); }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -148,33 +202,109 @@ export default function ProfileScreen({ navigation }: Props) {
                 <Ionicons name="lock-closed-outline" size={18} color="#64748b" />
                 <TextInput
                   style={styles.input}
-                  placeholder="Password"
+                  placeholder="Password (min. 8 characters)"
                   value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
+                  onChangeText={(text) => { setPassword(text); setAuthError(''); }}
+                  secureTextEntry={!showPassword}
                   placeholderTextColor="#475569"
                 />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color="#64748b" />
+                </TouchableOpacity>
               </View>
             </View>
 
-            {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+            {/* Error / Reset Sent */}
+            {authError ? (
+              <View style={styles.errorBanner}>
+                <Ionicons name="alert-circle-outline" size={15} color="#fbbf24" />
+                <Text style={styles.errorText}>{authError}</Text>
+              </View>
+            ) : null}
+            {resetSent ? (
+              <View style={styles.successBanner}>
+                <Ionicons name="checkmark-circle-outline" size={15} color="#22c55e" />
+                <Text style={styles.successText}>Reset link sent! Check your inbox.</Text>
+              </View>
+            ) : null}
 
+            {/* Forgot password (login mode only) */}
+            {isLogin && (
+              <TouchableOpacity
+                style={styles.forgotRow}
+                onPress={handleForgotPassword}
+                disabled={resetLoading}
+              >
+                <Text style={styles.forgotText}>
+                  {resetLoading ? 'Sending...' : 'Forgot password?'}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Main action button */}
             <TouchableOpacity
               style={[styles.authButton, authLoading && styles.authButtonDisabled]}
               onPress={handleAuth}
               disabled={authLoading}
               activeOpacity={0.8}
             >
-              <Text style={styles.authButtonText}>
-                {authLoading ? (isLogin ? 'Signing in...' : 'Creating account...') : isLogin ? 'Sign In' : 'Create Account'}
+              {authLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.authButtonText}>
+                  {isLogin ? 'Sign In' : 'Create Account'}
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Toggle login / signup */}
+            <TouchableOpacity
+              onPress={() => { setIsLogin(!isLogin); setAuthError(''); setResetSent(false); }}
+              style={styles.switchRow}
+            >
+              <Text style={styles.switchText}>
+                {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                <Text style={styles.switchTextBold}>{isLogin ? 'Sign Up' : 'Sign In'}</Text>
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-              <Text style={styles.switchText}>
-                {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
-              </Text>
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerLabel}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Continue as guest */}
+            <TouchableOpacity
+              style={styles.guestButton}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="person-outline" size={16} color="#64748b" />
+              <Text style={styles.guestButtonText}>Continue as Guest</Text>
             </TouchableOpacity>
+
+            {/* Terms notice for sign up */}
+            {!isLogin && (
+              <Text style={styles.termsNotice}>
+                By creating an account you agree to our{' '}
+                <Text
+                  style={styles.termsLink}
+                  onPress={() => navigation.navigate('TermsOfService')}
+                >
+                  Terms of Service
+                </Text>
+                {' '}and{' '}
+                <Text
+                  style={styles.termsLink}
+                  onPress={() => navigation.navigate('PrivacyPolicy')}
+                >
+                  Privacy Policy
+                </Text>
+                .
+              </Text>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -211,7 +341,7 @@ export default function ProfileScreen({ navigation }: Props) {
             <Ionicons name="chevron-back" size={22} color="#e5e7eb" />
           </TouchableOpacity>
           <Text style={styles.screenTitle}>Profile</Text>
-          <TouchableOpacity onPress={handleLogout}>
+          <TouchableOpacity onPress={handleLogout} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="log-out-outline" size={22} color="#ef4444" />
           </TouchableOpacity>
         </View>
@@ -396,7 +526,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 8,
     width: '100%',
   },
   inputWrapper: {
@@ -421,10 +551,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
   },
-  errorText: {
-    fontSize: 12,
-    color: '#fbbf24',
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(251,191,36,0.08)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     marginBottom: 8,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.2)',
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#fbbf24',
+    flex: 1,
+  },
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(34,197,94,0.08)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.2)',
+  },
+  successText: {
+    fontSize: 13,
+    color: '#22c55e',
+    flex: 1,
+  },
+  forgotRow: {
+    alignSelf: 'flex-end',
+    marginBottom: 16,
+    marginTop: -4,
+  },
+  forgotText: {
+    fontSize: 13,
+    color: '#6366f1',
+    fontWeight: '500',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -473,58 +644,131 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
+    paddingBottom: 40,
   },
   authContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     maxWidth: 400,
     alignSelf: 'center',
     width: '100%',
-    paddingBottom: 40,
+    paddingTop: 16,
+  },
+  authBranding: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   authIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(165,180,252,0.1)',
+    width: 72,
+    height: 72,
+    borderRadius: 22,
+    backgroundColor: 'rgba(99,102,241,0.12)',
     borderWidth: 1,
     borderColor: 'rgba(165,180,252,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
+  },
+  authAppName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#64748b',
+    letterSpacing: 0.5,
   },
   authTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: '#f9fafb',
     marginBottom: 6,
+    textAlign: 'center',
   },
   authSubtitle: {
     fontSize: 14,
     color: '#64748b',
-    marginBottom: 24,
+    marginBottom: 28,
     textAlign: 'center',
+    lineHeight: 20,
   },
   authButton: {
     backgroundColor: '#6366f1',
-    paddingVertical: 14,
+    paddingVertical: 15,
     borderRadius: 14,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   authButtonDisabled: {
     backgroundColor: '#374151',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   authButtonText: {
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
   },
+  switchRow: {
+    marginBottom: 20,
+  },
   switchText: {
     fontSize: 14,
-    color: '#6366f1',
+    color: '#64748b',
     textAlign: 'center',
+  },
+  switchTextBold: {
+    color: '#6366f1',
+    fontWeight: '700',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 16,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#1e293b',
+  },
+  dividerLabel: {
+    fontSize: 12,
+    color: '#475569',
+    fontWeight: '500',
+  },
+  guestButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.2)',
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+    width: '100%',
+    justifyContent: 'center',
+    marginBottom: 20,
+    backgroundColor: 'rgba(15,23,42,0.6)',
+  },
+  guestButtonText: {
+    fontSize: 15,
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  termsNotice: {
+    fontSize: 12,
+    color: '#475569',
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 10,
+  },
+  termsLink: {
+    color: '#6366f1',
+    fontWeight: '600',
   },
 });

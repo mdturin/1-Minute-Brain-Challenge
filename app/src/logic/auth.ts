@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged as onFirebaseAuthStateChanged,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 import { migrateLocalDataToCloud } from "./migrate";
@@ -85,6 +86,11 @@ export const getCurrentUser = (): AuthUser | null => {
     };
   }
   return null;
+};
+
+export const resetPassword = async (email: string): Promise<void> => {
+  if (!auth) throw new Error("Firebase is not configured");
+  await sendPasswordResetEmail(auth, email);
 };
 
 export const onAuthStateChanged = (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity, Linking, ScrollView } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,29 +54,21 @@ export default function SettingsScreen({ navigation }: Props) {
             icon="document-text-outline"
             iconColor="#60a5fa"
             label="Privacy Policy"
-            onPress={() => {
-              // TODO: Replace with actual privacy policy URL
-              Linking.openURL('https://example.com/privacy');
-            }}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="clipboard-outline"
             iconColor="#60a5fa"
             label="Terms of Service"
-            onPress={() => {
-              // TODO: Replace with actual terms URL
-              Linking.openURL('https://example.com/terms');
-            }}
+            onPress={() => navigation.navigate('TermsOfService')}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="information-circle-outline"
             iconColor="#a5b4fc"
             label="About"
-            onPress={() => {
-              // Could navigate to an about screen
-            }}
+            onPress={() => navigation.navigate('About')}
           />
           <View style={styles.divider} />
           <SettingsRow
