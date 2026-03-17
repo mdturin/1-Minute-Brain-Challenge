@@ -33,12 +33,12 @@ export default function App() {
       <NavigationContainer>
         <StatusBar style="light" />
         <Stack.Navigator
-        initialRouteName="Home"
-        screenOptions={{
-          headerShown: false,
-          animation: 'fade',
-        }}
-      >
+          initialRouteName="Home"
+          screenOptions={{
+            headerShown: false,
+            animation: 'fade',
+          }}
+        >
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Game" component={GameScreen} />

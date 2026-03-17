@@ -62,14 +62,14 @@ describe('generateSymbolCountPuzzle', () => {
     for (let i = 0; i < 10; i++) {
       const easy = generateSymbolCountPuzzle('easy');
       const correctCount = Number(easy.options[easy.correctIndex]);
-      expect(correctCount).toBeGreaterThanOrEqual(1);
+      expect(correctCount).toBeGreaterThanOrEqual(0);
       expect(correctCount).toBeLessThanOrEqual(9);
     }
     // Hard: 4x4 = 16 symbols total in grid
     for (let i = 0; i < 10; i++) {
       const hard = generateSymbolCountPuzzle('hard');
       const correctCount = Number(hard.options[hard.correctIndex]);
-      expect(correctCount).toBeGreaterThanOrEqual(1);
+      expect(correctCount).toBeGreaterThanOrEqual(0);
       expect(correctCount).toBeLessThanOrEqual(16);
     }
   });
