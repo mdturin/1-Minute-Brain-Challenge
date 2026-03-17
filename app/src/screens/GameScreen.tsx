@@ -12,6 +12,9 @@ import MentalMathView from '../components/puzzles/MentalMathView';
 import MemorySequenceView from '../components/puzzles/MemorySequenceView';
 import LogicMiniView from '../components/puzzles/LogicMiniView';
 import PatternVisualView from '../components/puzzles/PatternVisualView';
+import WordScrambleView from '../components/puzzles/WordScrambleView';
+import OddOneOutView from '../components/puzzles/OddOneOutView';
+import SymbolCountView from '../components/puzzles/SymbolCountView';
 import { updateStats } from '../storage/stats';
 import { canShowInterstitialNow, showInterstitialWithCallbacks } from '../logic/ads';
 
@@ -28,6 +31,9 @@ const PUZZLE_ICONS: Record<string, string> = {
   memory_sequence: 'grid-outline',
   logic_mini: 'bulb-outline',
   pattern_visual: 'shapes-outline',
+  word_scramble: 'text-outline',
+  odd_one_out: 'remove-circle-outline',
+  symbol_count: 'eye-outline',
 };
 
 const PUZZLE_LABELS: Record<string, string> = {
@@ -35,6 +41,9 @@ const PUZZLE_LABELS: Record<string, string> = {
   memory_sequence: 'Memory Sequence',
   logic_mini: 'Logic Pattern',
   pattern_visual: 'Visual Pattern',
+  word_scramble: 'Word Scramble',
+  odd_one_out: 'Odd One Out',
+  symbol_count: 'Symbol Count',
 };
 
 export default function GameScreen({ navigation, route }: Props) {
@@ -172,6 +181,12 @@ export default function GameScreen({ navigation, route }: Props) {
         return <LogicMiniView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       case 'pattern_visual':
         return <PatternVisualView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'word_scramble':
+        return <WordScrambleView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'odd_one_out':
+        return <OddOneOutView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'symbol_count':
+        return <SymbolCountView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       default:
         return null;
     }

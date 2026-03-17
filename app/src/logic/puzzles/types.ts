@@ -1,4 +1,4 @@
-export type PuzzleType = 'mental_math' | 'memory_sequence' | 'logic_mini' | 'pattern_visual';
+export type PuzzleType = 'mental_math' | 'memory_sequence' | 'logic_mini' | 'pattern_visual' | 'word_scramble' | 'odd_one_out' | 'symbol_count';
 
 export type PatternVisualSymbolKey = 'circle' | 'square' | 'triangle' | 'star';
 
