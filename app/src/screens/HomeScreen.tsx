@@ -7,8 +7,8 @@ import BannerAd from '../components/BannerAd';
 import { DIFFICULTIES, orderedDifficulties, type Difficulty } from '../logic/difficulty';
 import { loadStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
-import { canStartGame, getCostForDifficulty, REFILL_PER_HOUR } from '../logic/energy';
-import { showRewardedWithCallbacks } from '../logic/ads';
+import { canStartGame, getCostForDifficulty, REFILL_PER_HOUR, REWARDED_AD_ENERGY_GRANT, REWARDED_AD_DAILY_LIMIT } from '../logic/energy';
+import { showRewardedWithCallbacks, getDailyRewardedCount, canWatchRewardedToday } from '../logic/ads';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -27,9 +27,12 @@ export default function HomeScreen({ navigation }: Props) {
   const { energy, maxEnergy, isLoading: energyLoading, spendForDifficulty, grantEnergy } = useEnergy();
   const [energyMessage, setEnergyMessage] = useState<string | null>(null);
   const [isAnimatingPlay, setIsAnimatingPlay] = useState(false);
+  const [rewardedCount, setRewardedCount] = useState(0);
+  const [rewardedAvailable, setRewardedAvailable] = useState(true);
 
   const animatedEnergyValue = useRef(new Animated.Value(energy)).current;
   const pulseValue = useRef(new Animated.Value(0)).current;
+  const rewardPulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (isAnimatingPlay) return;
@@ -51,6 +54,33 @@ export default function HomeScreen({ navigation }: Props) {
     };
     void fetchData();
   }, []);
+
+  // Load daily rewarded ad count on mount and whenever screen is focused
+  useEffect(() => {
+    const loadRewardedCount = async () => {
+      const count = await getDailyRewardedCount();
+      const available = await canWatchRewardedToday();
+      setRewardedCount(count);
+      setRewardedAvailable(available);
+    };
+    void loadRewardedCount();
+  }, []);
+
+  // Urgency pulse on the "Watch ad" button when energy is low
+  useEffect(() => {
+    if (energy < 10 && rewardedAvailable) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(rewardPulseAnim, { toValue: 1.04, duration: 600, useNativeDriver: true }),
+          Animated.timing(rewardPulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    } else {
+      rewardPulseAnim.setValue(1);
+    }
+  }, [energy, rewardedAvailable, rewardPulseAnim]);
 
   const handlePlayPress = async (difficultyKey: Difficulty) => {
     if (isAnimatingPlay) return;
@@ -162,22 +192,37 @@ export default function HomeScreen({ navigation }: Props) {
 
         {/* Reward Ad */}
         {energy < maxEnergy && (
-          <TouchableOpacity
-            style={styles.rewardButton}
-            onPress={() => {
-              setEnergyMessage(null);
-              showRewardedWithCallbacks(
-                () => { void grantEnergy(10); },
-                undefined,
-                () => { setEnergyMessage('Ad was not available. Please try again later.'); }
-              );
-            }}
-            disabled={energyLoading}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="videocam-outline" size={18} color="#a5b4fc" />
-            <Text style={styles.rewardButtonText}>Watch ad for +10 energy</Text>
-          </TouchableOpacity>
+          rewardedAvailable ? (
+            <Animated.View style={{ transform: [{ scale: rewardPulseAnim }] }}>
+              <TouchableOpacity
+                style={styles.rewardButton}
+                onPress={() => {
+                  setEnergyMessage(null);
+                  showRewardedWithCallbacks(
+                    () => {
+                      void grantEnergy(REWARDED_AD_ENERGY_GRANT);
+                      setRewardedCount((c) => c + 1);
+                      setRewardedAvailable(rewardedCount + 1 < REWARDED_AD_DAILY_LIMIT);
+                    },
+                    undefined,
+                    () => { setEnergyMessage('Ad was not available. Please try again later.'); }
+                  );
+                }}
+                disabled={energyLoading}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="videocam-outline" size={18} color="#a5b4fc" />
+                <Text style={styles.rewardButtonText}>
+                  Watch ad (+{REWARDED_AD_ENERGY_GRANT} energy) · {REWARDED_AD_DAILY_LIMIT - rewardedCount} left today
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          ) : (
+            <View style={[styles.rewardButton, styles.rewardButtonDisabled]}>
+              <Ionicons name="time-outline" size={18} color="#64748b" />
+              <Text style={styles.rewardButtonTextDisabled}>Come back tomorrow for more energy!</Text>
+            </View>
+          )
         )}
 
         {/* Stats */}
@@ -382,6 +427,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#a5b4fc',
+  },
+  rewardButtonDisabled: {
+    borderColor: 'rgba(100,116,139,0.3)',
+    backgroundColor: 'rgba(100,116,139,0.05)',
+  },
+  rewardButtonTextDisabled: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#64748b',
   },
   statsRow: {
     flexDirection: 'row',

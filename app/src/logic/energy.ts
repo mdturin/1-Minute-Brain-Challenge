@@ -5,9 +5,14 @@ export const REFILL_PER_HOUR = 10;
 
 export const ENERGY_COST_BY_DIFFICULTY: Record<Difficulty, number> = {
   easy: 2,
-  medium: 4,
-  hard: 6,
+  medium: 5,
+  hard: 10,
 };
+
+/** Energy granted per rewarded ad watch. */
+export const REWARDED_AD_ENERGY_GRANT = 20;
+/** Maximum rewarded ad watches per calendar day. */
+export const REWARDED_AD_DAILY_LIMIT = 5;
 
 export type EnergyState = {
   current: number;
