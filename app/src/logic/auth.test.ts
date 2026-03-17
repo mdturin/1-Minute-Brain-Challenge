@@ -1,5 +1,18 @@
 /// <reference types="jest" />
 
+// Mock firebaseConfig BEFORE importing auth — provides a non-null auth object
+// NOTE: jest.mock factories are hoisted, so we define the mock auth inline
+jest.mock("./firebaseConfig", () => {
+  const mockAuth = { currentUser: null as any };
+  return {
+    __esModule: true,
+    app: {},
+    auth: mockAuth,
+    db: null,
+    analytics: null,
+  };
+});
+
 // Mock Firebase Analytics to avoid window issues
 jest.mock("firebase/analytics", () => ({
   getAnalytics: jest.fn(() => ({})),
@@ -19,24 +32,24 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   },
 }));
 
-import {
-  signUp,
-  signIn,
-  signOut,
-  getCurrentUser,
-  onAuthStateChanged,
-  type AuthUser,
-} from "./auth";
+// Mock Firebase Auth functions
+const mockCreateUserWithEmailAndPassword = jest.fn();
+const mockSignInWithEmailAndPassword = jest.fn();
+const mockFirebaseSignOut = jest.fn();
+const mockOnAuthStateChangedFirebase = jest.fn();
+const mockSendPasswordResetEmail = jest.fn();
 
-// Mock Firebase Auth
 jest.mock("firebase/auth", () => ({
-  getAuth: jest.fn(() => ({
-    currentUser: null,
-  })),
-  createUserWithEmailAndPassword: jest.fn(),
-  signInWithEmailAndPassword: jest.fn(),
-  signOut: jest.fn(),
-  onAuthStateChanged: jest.fn(),
+  getAuth: jest.fn(),
+  createUserWithEmailAndPassword: (...args: any[]) =>
+    mockCreateUserWithEmailAndPassword(...args),
+  signInWithEmailAndPassword: (...args: any[]) =>
+    mockSignInWithEmailAndPassword(...args),
+  signOut: (...args: any[]) => mockFirebaseSignOut(...args),
+  onAuthStateChanged: (...args: any[]) =>
+    mockOnAuthStateChangedFirebase(...args),
+  sendPasswordResetEmail: (...args: any[]) =>
+    mockSendPasswordResetEmail(...args),
 }));
 
 // Mock Firebase Firestore
@@ -47,21 +60,26 @@ jest.mock("firebase/firestore", () => ({
   setDoc: jest.fn(),
 }));
 
-const mockCreateUserWithEmailAndPassword = require("firebase/auth")
-  .createUserWithEmailAndPassword as jest.Mock;
-const mockSignInWithEmailAndPassword = require("firebase/auth")
-  .signInWithEmailAndPassword as jest.Mock;
-const mockFirebaseSignOut = require("firebase/auth").signOut as jest.Mock;
-const mockOnAuthStateChangedFirebase = require("firebase/auth")
-  .onAuthStateChanged as jest.Mock;
+// Mock migration
+jest.mock("./migrate", () => ({
+  migrateLocalDataToCloud: jest.fn().mockResolvedValue(undefined),
+}));
 
-const mockSignUp = signUp as jest.Mock;
-const mockSignIn = signIn as jest.Mock;
-const mockSignOut = signOut as jest.Mock;
-const mockGetCurrentUser = getCurrentUser as jest.Mock;
-const mockOnAuthStateChanged = onAuthStateChanged as jest.Mock;
+import {
+  signUp,
+  signIn,
+  signOut,
+  getCurrentUser,
+  onAuthStateChanged,
+  resetPassword,
+} from "./auth";
+
+// Get a reference to the mock auth object for mutation in tests
+const mockAuth = require("./firebaseConfig").auth;
+
 beforeEach(() => {
   jest.clearAllMocks();
+  mockAuth.currentUser = null;
 });
 
 describe("signUp", () => {
@@ -78,7 +96,7 @@ describe("signUp", () => {
     const result = await signUp("test@example.com", "password123");
 
     expect(mockCreateUserWithEmailAndPassword).toHaveBeenCalledWith(
-      expect.any(Object), // auth instance
+      mockAuth,
       "test@example.com",
       "password123",
     );
@@ -134,7 +152,7 @@ describe("signIn", () => {
     const result = await signIn("test@example.com", "password123");
 
     expect(mockSignInWithEmailAndPassword).toHaveBeenCalledWith(
-      expect.any(Object),
+      mockAuth,
       "test@example.com",
       "password123",
     );
@@ -173,7 +191,7 @@ describe("signOut", () => {
     mockFirebaseSignOut.mockResolvedValue(undefined);
 
     await expect(signOut()).resolves.toBeUndefined();
-    expect(mockFirebaseSignOut).toHaveBeenCalledWith(expect.any(Object));
+    expect(mockFirebaseSignOut).toHaveBeenCalledWith(mockAuth);
   });
 
   test("throws error on sign out failure", async () => {
@@ -185,12 +203,11 @@ describe("signOut", () => {
 
 describe("getCurrentUser", () => {
   test("returns current user when authenticated", () => {
-    const mockUser = {
+    mockAuth.currentUser = {
       uid: "123",
       email: "test@example.com",
       displayName: "Test User",
     };
-    mockGetCurrentUser.mockReturnValue(mockUser);
 
     const result = getCurrentUser();
 
@@ -202,7 +219,7 @@ describe("getCurrentUser", () => {
   });
 
   test("returns null when not authenticated", () => {
-    mockGetCurrentUser.mockReturnValue(null);
+    mockAuth.currentUser = null;
 
     const result = getCurrentUser();
 
@@ -219,14 +236,19 @@ describe("onAuthStateChanged", () => {
       displayName: "Test User",
     };
 
-    mockOnAuthStateChangedFirebase.mockImplementation((auth, observer) => {
-      observer(mockUser);
-      return jest.fn();
-    });
+    mockOnAuthStateChangedFirebase.mockImplementation(
+      (_auth: any, observer: any) => {
+        observer(mockUser);
+        return jest.fn();
+      },
+    );
 
     onAuthStateChanged(callback);
 
-    expect(mockOnAuthStateChangedFirebase).toHaveBeenCalled();
+    expect(mockOnAuthStateChangedFirebase).toHaveBeenCalledWith(
+      mockAuth,
+      expect.any(Function),
+    );
     expect(callback).toHaveBeenCalledWith({
       uid: "123",
       email: "test@example.com",
@@ -237,13 +259,29 @@ describe("onAuthStateChanged", () => {
   test("calls callback with null on sign out", () => {
     const callback = jest.fn();
 
-    mockOnAuthStateChangedFirebase.mockImplementation((auth, observer) => {
-      observer(null);
-      return jest.fn();
-    });
+    mockOnAuthStateChangedFirebase.mockImplementation(
+      (_auth: any, observer: any) => {
+        observer(null);
+        return jest.fn();
+      },
+    );
 
     onAuthStateChanged(callback);
 
     expect(callback).toHaveBeenCalledWith(null);
+  });
+});
+
+describe("resetPassword", () => {
+  test("sends password reset email", async () => {
+    mockSendPasswordResetEmail.mockResolvedValue(undefined);
+
+    await expect(
+      resetPassword("test@example.com"),
+    ).resolves.toBeUndefined();
+    expect(mockSendPasswordResetEmail).toHaveBeenCalledWith(
+      mockAuth,
+      "test@example.com",
+    );
   });
 });

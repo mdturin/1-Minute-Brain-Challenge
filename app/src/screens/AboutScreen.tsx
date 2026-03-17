@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking, Platform } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { Ionicons } from '@expo/vector-icons';
@@ -131,8 +131,10 @@ export default function AboutScreen({ navigation }: Props) {
             iconColor="#eab308"
             label="Rate the App"
             onPress={() => {
-              // TODO: Replace with your Play Store / App Store URL
-              // Linking.openURL('https://play.google.com/store/apps/details?id=com.oneminutebrain.challenge');
+              const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.oneminutebrain.challenge';
+              const APP_STORE_URL = 'https://apps.apple.com/app/id000000000'; // update with real App Store ID when published on iOS
+              const url = Platform.OS === 'ios' ? APP_STORE_URL : PLAY_STORE_URL;
+              Linking.openURL(url).catch(() => {});
             }}
           />
           <View style={styles.divider} />
