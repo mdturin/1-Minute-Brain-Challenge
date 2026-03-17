@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, Modal, TouchableOpacity, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View, Modal, TouchableOpacity, Animated } from 'react-native';
 import BannerAd from '../components/BannerAd';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -18,6 +19,7 @@ import OddOneOutView from '../components/puzzles/OddOneOutView';
 import SymbolCountView from '../components/puzzles/SymbolCountView';
 import { updateStats } from '../storage/stats';
 import { canShowInterstitialNow, showInterstitialWithCallbacks } from '../logic/ads';
+import { maybeRequestReview } from '../logic/storeReview';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
@@ -102,6 +104,8 @@ export default function GameScreen({ navigation, route }: Props) {
     } catch (error) {
       console.error("Error updating stats:", error);
     }
+    // Prompt for app store review after enough games (non-blocking)
+    void maybeRequestReview(solvedCount + 1);
   };
 
   const showFeedback = (type: 'correct' | 'wrong', points: number) => {

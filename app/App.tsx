@@ -10,6 +10,7 @@ import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import TermsOfServiceScreen from './src/screens/TermsOfServiceScreen';
 import AboutScreen from './src/screens/AboutScreen';
 import ErrorBoundary from './src/components/ErrorBoundary';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './src/logic/firebaseConfig'; // Initialize Firebase
 
 export type RootStackParamList = {
@@ -30,6 +31,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   return (
     <ErrorBoundary>
+      <SafeAreaProvider>
       <NavigationContainer>
         <StatusBar style="light" />
         <Stack.Navigator
@@ -49,6 +51,7 @@ export default function App() {
           <Stack.Screen name="About" component={AboutScreen} />
         </Stack.Navigator>
       </NavigationContainer>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }
