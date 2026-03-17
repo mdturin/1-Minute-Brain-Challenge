@@ -4,15 +4,29 @@ import { generateMentalMathPuzzle } from './mentalMath';
 import { generateMemorySequencePuzzle } from './memorySequence';
 import { generateLogicMiniPuzzle } from './logicMini';
 import { generatePatternVisualPuzzle } from './patternVisual';
+import { generateWordScramblePuzzle } from './wordScramble';
+import { generateOddOneOutPuzzle } from './oddOneOut';
+import { generateSymbolCountPuzzle } from './symbolCount';
 
 const puzzleGenerators: Record<PuzzleType, (difficulty: Difficulty) => Puzzle> = {
   mental_math: generateMentalMathPuzzle,
   memory_sequence: generateMemorySequencePuzzle,
   logic_mini: generateLogicMiniPuzzle,
   pattern_visual: generatePatternVisualPuzzle,
+  word_scramble: generateWordScramblePuzzle,
+  odd_one_out: generateOddOneOutPuzzle,
+  symbol_count: generateSymbolCountPuzzle,
 };
 
-const puzzleTypes: PuzzleType[] = ['mental_math', 'memory_sequence', 'logic_mini', 'pattern_visual'];
+const puzzleTypes: PuzzleType[] = [
+  'mental_math',
+  'memory_sequence',
+  'logic_mini',
+  'pattern_visual',
+  'word_scramble',
+  'odd_one_out',
+  'symbol_count',
+];
 
 export function generateRandomPuzzle(difficulty: Difficulty, previousType?: PuzzleType): Puzzle {
   const availableTypes =
