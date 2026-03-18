@@ -12,7 +12,7 @@ type UseEnergyResult = {
   grantEnergy: (amount: number) => Promise<void>;
 };
 
-export function useEnergy(): UseEnergyResult {
+export function useEnergy({ isSubscribed = false }: { isSubscribed?: boolean } = {}): UseEnergyResult {
   const [energy, setEnergy] = useState<number>(MAX_ENERGY);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -35,6 +35,9 @@ export function useEnergy(): UseEnergyResult {
 
   const spendForDifficulty = useCallback(
     async (difficulty: Difficulty) => {
+      if (isSubscribed) {
+        return { success: true as const };
+      }
       try {
         const state = await loadAndRefillEnergy(Date.now());
 
@@ -58,7 +61,7 @@ export function useEnergy(): UseEnergyResult {
         return { success: false as const, reason: 'error' as const };
       }
     },
-    []
+    [isSubscribed]
   );
 
   const grantEnergy = useCallback(async (amount: number) => {

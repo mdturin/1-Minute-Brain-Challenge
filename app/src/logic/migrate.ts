@@ -7,6 +7,8 @@ const STORAGE_KEYS = {
   profile: "one-minute-brain-challenge/user-profile",
   stats: "one-minute-brain-challenge/stats",
   energy: "one-minute-brain-challenge/energy",
+  dailyChallenge: "one-minute-brain-challenge/daily-challenge",
+  subscription: "one-minute-brain-challenge/subscription",
 };
 
 export async function migrateLocalDataToCloud() {
@@ -34,6 +36,8 @@ export async function migrateLocalDataToCloud() {
   const localProfile = await AsyncStorage.getItem(STORAGE_KEYS.profile);
   const localStats = await AsyncStorage.getItem(STORAGE_KEYS.stats);
   const localEnergy = await AsyncStorage.getItem(STORAGE_KEYS.energy);
+  const localDailyChallenge = await AsyncStorage.getItem(STORAGE_KEYS.dailyChallenge);
+  const localSubscription = await AsyncStorage.getItem(STORAGE_KEYS.subscription);
 
   // Save to cloud
   try {
@@ -48,6 +52,14 @@ export async function migrateLocalDataToCloud() {
     if (localEnergy) {
       const energyData = JSON.parse(localEnergy);
       await setDoc(doc(db, "users", uid, "energy", "data"), energyData);
+    }
+    if (localDailyChallenge) {
+      const dailyChallengeData = JSON.parse(localDailyChallenge);
+      await setDoc(doc(db, "users", uid, "dailyChallenge", "data"), dailyChallengeData);
+    }
+    if (localSubscription) {
+      const subscriptionData = JSON.parse(localSubscription);
+      await setDoc(doc(db, "users", uid, "subscription", "data"), subscriptionData);
     }
   } catch (error) {
     console.error("Error migrating data to cloud:", error);

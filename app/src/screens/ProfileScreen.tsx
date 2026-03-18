@@ -8,6 +8,7 @@ import { loadStats, type GameStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
 import PrimaryButton from '../components/PrimaryButton';
 import { signIn, signUp, signOut, onAuthStateChanged, resetPassword, type AuthUser } from '../logic/auth';
+import { useSubscription } from '../logic/useSubscription';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
@@ -53,6 +54,7 @@ export default function ProfileScreen({ navigation }: Props) {
   const [resetLoading, setResetLoading] = useState(false);
 
   const { energy, maxEnergy, isLoading: energyLoading } = useEnergy();
+  const { isSubscribed, subscriptionTier, restore, isRestoring, deepLinkManage } = useSubscription();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged((authUser) => {
@@ -354,6 +356,12 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
           <Text style={styles.profileName}>{profile.displayName || 'Guest'}</Text>
           {user.email && <Text style={styles.profileEmail}>{user.email}</Text>}
+          {isSubscribed ? (
+            <View style={styles.crownBadge}>
+              <Ionicons name="star" size={13} color="#eab308" />
+              <Text style={styles.crownBadgeText}>Unlimited Member</Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Edit Profile */}
@@ -424,19 +432,82 @@ export default function ProfileScreen({ navigation }: Props) {
               <Text style={styles.statValue}>{averageScore}</Text>
               <Text style={styles.statLabel}>Avg Score</Text>
             </View>
+            <View style={styles.statCard}>
+              <Ionicons name="flame" size={20} color="#ef4444" />
+              <Text style={styles.statValue}>{stats.currentDayStreak}</Text>
+              <Text style={styles.statLabel}>Day Streak</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Ionicons name="calendar-outline" size={20} color="#a5b4fc" />
+              <Text style={styles.statValue}>{stats.longestDayStreak}</Text>
+              <Text style={styles.statLabel}>Best Days</Text>
+            </View>
           </View>
         </View>
 
         {/* Energy */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Energy</Text>
-          <View style={styles.energyRow}>
-            <Ionicons name="flash" size={20} color="#a5b4fc" />
-            <Text style={styles.energyText}>
-              {energyLoading ? 'Loading...' : `${energy} / ${maxEnergy}`}
+          <View style={[styles.energyRow, isSubscribed && styles.energyRowUnlimited]}>
+            <Ionicons name={isSubscribed ? 'star' : 'flash'} size={20} color={isSubscribed ? '#eab308' : '#a5b4fc'} />
+            <Text style={[styles.energyText, isSubscribed && styles.energyTextUnlimited]}>
+              {isSubscribed ? 'Unlimited' : (energyLoading ? 'Loading...' : `${energy} / ${maxEnergy}`)}
             </Text>
           </View>
-          <Text style={styles.energyHint}>Refills 10 per hour. Watch ads on the home screen for bonus energy.</Text>
+          {!isSubscribed ? (
+            <Text style={styles.energyHint}>Refills 10 per hour. Watch ads on the home screen for bonus energy.</Text>
+          ) : null}
+        </View>
+
+        {/* Subscription */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Subscription</Text>
+          {isSubscribed ? (
+            <View style={styles.subscriptionCard}>
+              <View style={styles.subscriptionRow}>
+                <View style={styles.subscriptionInfo}>
+                  <Ionicons name="star" size={20} color="#eab308" />
+                  <View style={styles.subscriptionTextGroup}>
+                    <Text style={styles.subscriptionTitle}>Unlimited Energy</Text>
+                    <Text style={styles.subscriptionTierLabel}>
+                      {subscriptionTier === 'lifetime' ? 'Lifetime' : 'Monthly'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.activeBadge}>
+                  <Text style={styles.activeBadgeText}>Active</Text>
+                </View>
+              </View>
+              {subscriptionTier !== 'lifetime' ? (
+                <TouchableOpacity style={styles.manageLink} onPress={deepLinkManage}>
+                  <Text style={styles.manageLinkText}>Manage Subscription</Text>
+                  <Ionicons name="chevron-forward" size={14} color="#6366f1" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : (
+            <View style={styles.upgradeCard}>
+              <View style={styles.upgradeCardRow}>
+                <Ionicons name="star-outline" size={20} color="#eab308" />
+                <View style={styles.upgradeCardText}>
+                  <Text style={styles.upgradeCardTitle}>Upgrade to Unlimited Energy</Text>
+                  <Text style={styles.upgradeCardSubtext}>Play without limits, no energy costs</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.upgradeButton}
+                onPress={() => navigation.navigate('Paywall')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.upgradeButtonText}>View Plans</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.restoreLink} onPress={restore} disabled={isRestoring}>
+                <Text style={styles.restoreLinkText}>
+                  {isRestoring ? 'Restoring...' : 'Restore Purchases'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -639,6 +710,126 @@ const styles = StyleSheet.create({
   energyHint: {
     fontSize: 12,
     color: '#64748b',
+  },
+  energyRowUnlimited: {
+    borderColor: 'rgba(234,179,8,0.2)',
+    backgroundColor: 'rgba(234,179,8,0.05)',
+  },
+  energyTextUnlimited: {
+    color: '#eab308',
+  },
+  crownBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(234,179,8,0.1)',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginTop: 8,
+  },
+  crownBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#eab308',
+  },
+  subscriptionCard: {
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(234,179,8,0.25)',
+    gap: 12,
+  },
+  subscriptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  subscriptionInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  subscriptionTextGroup: {
+    gap: 2,
+  },
+  subscriptionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#f9fafb',
+  },
+  subscriptionTierLabel: {
+    fontSize: 12,
+    color: '#eab308',
+    fontWeight: '600',
+  },
+  activeBadge: {
+    backgroundColor: 'rgba(34,197,94,0.15)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  activeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#22c55e',
+  },
+  manageLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingTop: 4,
+  },
+  manageLinkText: {
+    fontSize: 13,
+    color: '#6366f1',
+    fontWeight: '600',
+  },
+  upgradeCard: {
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(234,179,8,0.15)',
+    gap: 12,
+  },
+  upgradeCardRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  upgradeCardText: {
+    flex: 1,
+    gap: 3,
+  },
+  upgradeCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#f9fafb',
+  },
+  upgradeCardSubtext: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  upgradeButton: {
+    backgroundColor: '#6366f1',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  upgradeButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  restoreLink: {
+    alignItems: 'center',
+  },
+  restoreLinkText: {
+    fontSize: 12,
+    color: '#64748b',
+    textDecorationLine: 'underline',
   },
   // Auth screen styles
   authScroll: {

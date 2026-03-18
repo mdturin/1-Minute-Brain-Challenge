@@ -161,7 +161,7 @@ const hardPatterns: LogicPattern[] = [
   { sequence: [5, 1, 10, 2], correct: 15 },
 ];
 
-function pickRandomPattern(difficulty: Difficulty): LogicPattern {
+function pickRandomPattern(difficulty: Difficulty, rng?: () => number): LogicPattern {
   let pool: LogicPattern[];
 
   switch (difficulty) {
@@ -178,11 +178,11 @@ function pickRandomPattern(difficulty: Difficulty): LogicPattern {
       pool = [...easyPatterns, ...mediumPatterns];
   }
 
-  return pool[Math.floor(Math.random() * pool.length)]!;
+  return pool[Math.floor((rng ?? Math.random)() * pool.length)]!;
 }
 
-export function generateLogicMiniPuzzle(difficulty: Difficulty): Puzzle {
-  const pattern = pickRandomPattern(difficulty);
+export function generateLogicMiniPuzzle(difficulty: Difficulty, rng?: () => number): Puzzle {
+  const pattern = pickRandomPattern(difficulty, rng);
   const prompt = `Sequence: ${pattern.sequence.join(', ')}, ?`;
 
   const distractors = new Set<number>();
@@ -191,15 +191,15 @@ export function generateLogicMiniPuzzle(difficulty: Difficulty): Puzzle {
     attempts++;
     // Scale delta relative to correct answer so distractors are meaningful
     const base = Math.max(2, Math.round(Math.abs(pattern.correct) * 0.12));
-    const delta = Math.floor(Math.random() * base) + 1;
-    const sign = Math.random() > 0.5 ? 1 : -1;
+    const delta = Math.floor((rng ?? Math.random)() * base) + 1;
+    const sign = (rng ?? Math.random)() > 0.5 ? 1 : -1;
     const candidate = pattern.correct + sign * delta;
     if (candidate !== pattern.correct && candidate > 0) {
       distractors.add(candidate);
     }
   }
 
-  const optionsArray = [...distractors, pattern.correct].sort(() => Math.random() - 0.5);
+  const optionsArray = [...distractors, pattern.correct].sort(() => (rng ?? Math.random)() - 0.5);
   const correctIndex = optionsArray.indexOf(pattern.correct);
 
   return {

@@ -13,7 +13,10 @@
       "Bash(node node_modules/expo/bin/cli start --help)",
       "Bash(gh pr:*)",
       "Bash(where gh:*)",
-      "Bash(winget list:*)"
+      "Bash(winget list:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx jest:*)",
+      "Bash(npx expo:*)"
     ]
   }
 }

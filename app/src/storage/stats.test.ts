@@ -25,6 +25,11 @@ jest.mock("firebase/auth", () => ({
   })),
 }));
 
+// Mock leaderboard to prevent side-effects in stats tests
+jest.mock("./leaderboard", () => ({
+  upsertLeaderboardEntry: jest.fn(),
+}));
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loadStats, updateStats, type GameStats } from "./stats";
 
@@ -70,6 +75,9 @@ describe("stats storage", () => {
       gamesPlayed: 3,
       totalScore: 50,
       bestStreak: 4,
+      currentDayStreak: 1,
+      longestDayStreak: 1,
+      lastPlayedDate: '',
     };
     mockedStorage.getItem.mockResolvedValueOnce(JSON.stringify(current));
 

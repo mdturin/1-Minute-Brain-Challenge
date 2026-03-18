@@ -3,14 +3,14 @@ import type { Difficulty } from '../difficulty';
 
 type WordEntry = { word: string; group: string[] };
 
-function randomChoice<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!;
+function randomChoice<T>(arr: T[], rng?: () => number): T {
+  return arr[Math.floor((rng ?? Math.random)() * arr.length)]!;
 }
 
-function scramble(word: string): string {
+function scramble(word: string, rng?: () => number): string {
   const letters = word.split('');
   for (let i = letters.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor((rng ?? Math.random)() * (i + 1));
     [letters[i], letters[j]] = [letters[j]!, letters[i]!];
   }
   const result = letters.join('');
@@ -116,16 +116,16 @@ function getWordBank(difficulty: Difficulty): WordEntry[] {
   }
 }
 
-export function generateWordScramblePuzzle(difficulty: Difficulty): Puzzle {
+export function generateWordScramblePuzzle(difficulty: Difficulty, rng?: () => number): Puzzle {
   const bank = getWordBank(difficulty);
-  const entry = randomChoice(bank);
-  const scrambled = scramble(entry.word);
+  const entry = randomChoice(bank, rng);
+  const scrambled = scramble(entry.word, rng);
 
   const prompt = `Unscramble this word:\n\n${scrambled}`;
 
   // Pick 3 distractors from the group, shuffle all 4
-  const distractors = [...entry.group].sort(() => Math.random() - 0.5).slice(0, 3);
-  const optionsArr = [...distractors, entry.word].sort(() => Math.random() - 0.5);
+  const distractors = [...entry.group].sort(() => (rng ?? Math.random)() - 0.5).slice(0, 3);
+  const optionsArr = [...distractors, entry.word].sort(() => (rng ?? Math.random)() - 0.5);
   const correctIndex = optionsArr.indexOf(entry.word);
 
   return {

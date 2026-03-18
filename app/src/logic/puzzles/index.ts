@@ -8,7 +8,7 @@ import { generateWordScramblePuzzle } from './wordScramble';
 import { generateOddOneOutPuzzle } from './oddOneOut';
 import { generateSymbolCountPuzzle } from './symbolCount';
 
-const puzzleGenerators: Record<PuzzleType, (difficulty: Difficulty) => Puzzle> = {
+const puzzleGenerators: Record<PuzzleType, (difficulty: Difficulty, rng?: () => number) => Puzzle> = {
   mental_math: generateMentalMathPuzzle,
   memory_sequence: generateMemorySequencePuzzle,
   logic_mini: generateLogicMiniPuzzle,
@@ -28,17 +28,22 @@ const puzzleTypes: PuzzleType[] = [
   'symbol_count',
 ];
 
-export function generateRandomPuzzle(difficulty: Difficulty, previousType?: PuzzleType): Puzzle {
+export function generateRandomPuzzle(
+  difficulty: Difficulty,
+  previousType?: PuzzleType,
+  rng?: () => number,
+): Puzzle {
   const availableTypes =
     previousType != null && puzzleTypes.length > 1
       ? puzzleTypes.filter((t) => t !== previousType)
       : puzzleTypes;
 
-  const randomIndex = Math.floor(Math.random() * availableTypes.length);
+  const randomIndex = Math.floor((rng ?? Math.random)() * availableTypes.length);
   const type = availableTypes[randomIndex];
   const generator = puzzleGenerators[type];
-  return generator(difficulty);
+  return generator(difficulty, rng);
 }
 
 export type { Puzzle, PuzzleType } from './types';
+
 

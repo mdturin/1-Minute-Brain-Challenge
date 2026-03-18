@@ -33,6 +33,22 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
+// Mock useSubscription to prevent expo-iap / Firestore side-effects
+jest.mock('../logic/useSubscription', () => ({
+  useSubscription: jest.fn(() => ({
+    isSubscribed: false,
+    subscriptionTier: null,
+    isLoading: false,
+    monthlyProduct: null,
+    lifetimeProduct: null,
+    purchase: jest.fn(),
+    restore: jest.fn(),
+    isRestoring: false,
+    deepLinkManage: jest.fn(),
+  })),
+  SubscriptionProvider: ({ children }: any) => children,
+}));
+
 // Mock Firebase Analytics to avoid window issues
 jest.mock('firebase/analytics', () => ({
   getAnalytics: jest.fn(() => ({})),

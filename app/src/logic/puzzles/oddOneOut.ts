@@ -103,13 +103,13 @@ function getPool(difficulty: Difficulty): OddOneOutQuestion[] {
   }
 }
 
-export function generateOddOneOutPuzzle(difficulty: Difficulty): Puzzle {
+export function generateOddOneOutPuzzle(difficulty: Difficulty, rng?: () => number): Puzzle {
   const pool = getPool(difficulty);
-  const q = pool[Math.floor(Math.random() * pool.length)]!;
+  const q = pool[Math.floor((rng ?? Math.random)() * pool.length)]!;
 
   // Shuffle options while tracking the correct answer
   const indexed = q.options.map((opt, i) => ({ opt, correct: i === q.correctIndex }));
-  indexed.sort(() => Math.random() - 0.5);
+  indexed.sort(() => (rng ?? Math.random)() - 0.5);
   const correctIndex = indexed.findIndex((x) => x.correct);
 
   return {

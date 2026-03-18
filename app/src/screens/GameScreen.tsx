@@ -18,8 +18,11 @@ import WordScrambleView from '../components/puzzles/WordScrambleView';
 import OddOneOutView from '../components/puzzles/OddOneOutView';
 import SymbolCountView from '../components/puzzles/SymbolCountView';
 import { updateStats } from '../storage/stats';
+import { markTodayCompleted } from '../storage/dailyChallenge';
 import { canShowInterstitialNow, showInterstitialWithCallbacks } from '../logic/ads';
 import { maybeRequestReview } from '../logic/storeReview';
+import { createSeededRng, seedFromDateString } from '../logic/seededRng';
+import { localDateString } from '../logic/dateUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Game'>;
 
@@ -51,11 +54,21 @@ const PUZZLE_LABELS: Record<string, string> = {
 
 export default function GameScreen({ navigation, route }: Props) {
   const difficultyKey = route.params.difficulty;
+  const isDailyChallenge = route.params.isDailyChallenge ?? false;
   const difficultyConfig = DIFFICULTIES[difficultyKey];
-  const accentColor = DIFFICULTY_COLORS[difficultyKey];
+  const accentColor = isDailyChallenge ? '#fbbf24' : DIFFICULTY_COLORS[difficultyKey];
+
+  // Seeded RNG for daily challenge — created once, advances with each call
+  const rngRef = useRef<(() => number) | undefined>(
+    isDailyChallenge
+      ? createSeededRng(seedFromDateString(localDateString()))
+      : undefined,
+  );
 
   const [remainingTime, setRemainingTime] = useState<number>(difficultyConfig.durationSeconds);
-  const [currentPuzzle, setCurrentPuzzle] = useState<Puzzle>(() => generateRandomPuzzle(difficultyKey));
+  const [currentPuzzle, setCurrentPuzzle] = useState<Puzzle>(
+    () => generateRandomPuzzle(difficultyKey, undefined, rngRef.current),
+  );
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
@@ -74,7 +87,7 @@ export default function GameScreen({ navigation, route }: Props) {
     setMaxStreak(0);
     setPuzzlesSolved(0);
     setStatus('playing');
-    setCurrentPuzzle(generateRandomPuzzle(difficultyKey));
+    setCurrentPuzzle(generateRandomPuzzle(difficultyKey, undefined, rngRef.current));
   }, [difficultyKey]);
 
   useEffect(() => {
@@ -100,12 +113,15 @@ export default function GameScreen({ navigation, route }: Props) {
     setStatus('finished');
     setShowSummary(true);
     try {
+      if (isDailyChallenge) {
+        await markTodayCompleted(score);
+      }
       await updateStats({ lastScore: score, lastMaxStreak: maxStreak });
     } catch (error) {
       console.error("Error updating stats:", error);
     }
     // Prompt for app store review after enough games (non-blocking)
-    void maybeRequestReview(solvedCount + 1);
+    void maybeRequestReview(puzzlesSolved + 1);
   };
 
   const showFeedback = (type: 'correct' | 'wrong', points: number) => {
@@ -145,18 +161,26 @@ export default function GameScreen({ navigation, route }: Props) {
       showFeedback('wrong', 0);
     }
 
-    setCurrentPuzzle((prev) => generateRandomPuzzle(difficultyKey, prev.type));
+    setCurrentPuzzle((prev) => generateRandomPuzzle(difficultyKey, prev.type, rngRef.current));
+  };
+
+  const goBack = () => {
+    if (isDailyChallenge) {
+      navigation.replace('DailyChallenge');
+    } else {
+      navigation.replace('Home');
+    }
   };
 
   const handleBackToHome = () => {
-    const goHome = () => {
+    const go = () => {
       setShowSummary(false);
-      navigation.replace('Home');
+      goBack();
     };
     if (canShowInterstitialNow()) {
-      showInterstitialWithCallbacks(goHome, goHome);
+      showInterstitialWithCallbacks(go, go);
     } else {
-      goHome();
+      go();
     }
   };
 
@@ -214,7 +238,7 @@ export default function GameScreen({ navigation, route }: Props) {
         {/* Top Bar */}
         <View style={styles.topBar}>
           <TouchableOpacity
-            onPress={() => navigation.replace('Home')}
+            onPress={goBack}
             style={styles.backButton}
             hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           >
@@ -222,7 +246,10 @@ export default function GameScreen({ navigation, route }: Props) {
           </TouchableOpacity>
 
           <View style={[styles.difficultyBadge, { backgroundColor: accentColor }]}>
-            <Text style={styles.difficultyText}>{difficultyConfig.label}</Text>
+            {isDailyChallenge
+              ? <Text style={styles.difficultyText}>Daily Challenge</Text>
+              : <Text style={styles.difficultyText}>{difficultyConfig.label}</Text>
+            }
           </View>
 
           <View style={styles.scoreChip}>
@@ -290,8 +317,13 @@ export default function GameScreen({ navigation, route }: Props) {
         <Modal transparent visible={showSummary} animationType="fade">
           <View style={styles.modalBackdrop}>
             <View style={styles.modalContent}>
-              <Ionicons name="trophy" size={48} color="#eab308" />
-              <Text style={styles.modalTitle}>Game Over!</Text>
+              {isDailyChallenge
+                ? <Ionicons name="calendar" size={48} color="#fbbf24" />
+                : <Ionicons name="trophy" size={48} color="#eab308" />
+              }
+              <Text style={styles.modalTitle}>
+                {isDailyChallenge ? 'Daily Complete!' : 'Game Over!'}
+              </Text>
 
               <View style={styles.modalScoreCard}>
                 <Text style={styles.modalScoreLabel}>Final Score</Text>
@@ -315,14 +347,26 @@ export default function GameScreen({ navigation, route }: Props) {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.modalPlayAgain} onPress={handlePlayAgain} activeOpacity={0.8}>
-                <Ionicons name="refresh" size={18} color="#fff" />
-                <Text style={styles.modalPlayAgainText}>Play Again</Text>
-              </TouchableOpacity>
+              {!isDailyChallenge && (
+                <TouchableOpacity style={styles.modalPlayAgain} onPress={handlePlayAgain} activeOpacity={0.8}>
+                  <Ionicons name="refresh" size={18} color="#fff" />
+                  <Text style={styles.modalPlayAgainText}>Play Again</Text>
+                </TouchableOpacity>
+              )}
 
-              <TouchableOpacity style={styles.modalHomeButton} onPress={handleBackToHome} activeOpacity={0.8}>
-                <Ionicons name="home-outline" size={18} color="#a5b4fc" />
-                <Text style={styles.modalHomeText}>Back to Home</Text>
+              <TouchableOpacity
+                style={[styles.modalHomeButton, isDailyChallenge && styles.modalHomeButtonPrimary]}
+                onPress={handleBackToHome}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={isDailyChallenge ? 'calendar-outline' : 'home-outline'}
+                  size={18}
+                  color={isDailyChallenge ? '#fbbf24' : '#a5b4fc'}
+                />
+                <Text style={[styles.modalHomeText, isDailyChallenge && styles.modalHomeTextDaily]}>
+                  {isDailyChallenge ? 'See Daily History' : 'Back to Home'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -543,9 +587,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(165,180,252,0.3)',
     width: '100%',
   },
+  modalHomeButtonPrimary: {
+    borderColor: 'rgba(251,191,36,0.4)',
+    backgroundColor: 'rgba(251,191,36,0.08)',
+  },
   modalHomeText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#a5b4fc',
+  },
+  modalHomeTextDaily: {
+    color: '#fbbf24',
   },
 });

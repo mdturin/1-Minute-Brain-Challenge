@@ -12,27 +12,27 @@ const SYMBOL_CHARS: Record<string, string> = {
 
 const ALL_SYMBOLS = Object.keys(SYMBOL_CHARS);
 
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function randomInt(min: number, max: number, rng?: () => number): number {
+  return Math.floor((rng ?? Math.random)() * (max - min + 1)) + min;
 }
 
-function randomChoice<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!;
+function randomChoice<T>(arr: T[], rng?: () => number): T {
+  return arr[Math.floor((rng ?? Math.random)() * arr.length)]!;
 }
 
-function buildDistractors(correct: number, count: number, min = 0): number[] {
+function buildDistractors(correct: number, count: number, rng?: () => number, min = 0): number[] {
   const set = new Set<number>();
   let attempts = 0;
   while (set.size < count && attempts < 200) {
     attempts++;
-    const delta = randomInt(1, 3) * (Math.random() > 0.5 ? 1 : -1);
+    const delta = randomInt(1, 3, rng) * ((rng ?? Math.random)() > 0.5 ? 1 : -1);
     const candidate = correct + delta;
     if (candidate >= min && candidate !== correct) set.add(candidate);
   }
   return Array.from(set);
 }
 
-export function generateSymbolCountPuzzle(difficulty: Difficulty): Puzzle {
+export function generateSymbolCountPuzzle(difficulty: Difficulty, rng?: () => number): Puzzle {
   let rows: number;
   let cols: number;
   let symbolCount: number; // how many distinct symbols to use
@@ -52,12 +52,12 @@ export function generateSymbolCountPuzzle(difficulty: Difficulty): Puzzle {
   }
 
   // Pick which symbols to use
-  const usedSymbols = [...ALL_SYMBOLS].sort(() => Math.random() - 0.5).slice(0, symbolCount);
-  const targetSymbol = randomChoice(usedSymbols);
+  const usedSymbols = [...ALL_SYMBOLS].sort(() => (rng ?? Math.random)() - 0.5).slice(0, symbolCount);
+  const targetSymbol = randomChoice(usedSymbols, rng);
 
   // Fill grid randomly using only usedSymbols
   const totalCells = rows * cols;
-  const grid: string[] = Array.from({ length: totalCells }, () => randomChoice(usedSymbols));
+  const grid: string[] = Array.from({ length: totalCells }, () => randomChoice(usedSymbols, rng));
 
   // Count target symbol occurrences
   const correctCount = grid.filter((s) => s === targetSymbol).length;
@@ -74,8 +74,8 @@ export function generateSymbolCountPuzzle(difficulty: Difficulty): Puzzle {
   const prompt = `How many ${targetChar} are in the grid?\n\n${gridDisplay}`;
 
   // Build options
-  const distractors = buildDistractors(correctCount, 3, 0);
-  const optionsArr = [...distractors, correctCount].sort(() => Math.random() - 0.5);
+  const distractors = buildDistractors(correctCount, 3, rng, 0);
+  const optionsArr = [...distractors, correctCount].sort(() => (rng ?? Math.random)() - 0.5);
   const correctIndex = optionsArr.indexOf(correctCount);
 
   return {
