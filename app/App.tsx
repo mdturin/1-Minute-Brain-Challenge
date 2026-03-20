@@ -1,6 +1,8 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import HomeScreen from './src/screens/HomeScreen';
 import GameScreen from './src/screens/GameScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -37,6 +39,16 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+  const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Home' | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem('hasSeenOnboarding').then(val => {
+      setInitialRoute(val === 'true' ? 'Home' : 'Onboarding');
+    });
+  }, []);
+
+  if (!initialRoute) return null;
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
@@ -44,7 +56,7 @@ export default function App() {
       <NavigationContainer>
         <StatusBar style="light" />
         <Stack.Navigator
-          initialRouteName="Home"
+          initialRouteName={initialRoute}
           screenOptions={{
             headerShown: false,
             animation: 'fade',

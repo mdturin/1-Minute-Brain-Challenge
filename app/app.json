@@ -38,6 +38,20 @@
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "firebase": {
+        "apiKey": "AIzaSyCg8CjmsNN2pQdvHDwzooG1_ve_o5-7VQA",
+        "authDomain": "minute-brain-challange.firebaseapp.com",
+        "projectId": "minute-brain-challange",
+        "storageBucket": "minute-brain-challange.firebasestorage.app",
+        "messagingSenderId": "1097445883559",
+        "appId": "1:1097445883559:web:cb4f26e8c549a8d591e582",
+        "measurementId": "G-B8XJHQ1FMC"
+      },
+      "eas": {
+        "projectId": "d6f0256f-1104-4772-9ccb-7154be0d8c48"
+      }
+    }
   }
 }

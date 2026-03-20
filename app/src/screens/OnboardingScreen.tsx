@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
@@ -11,8 +12,8 @@ const PAGES = [
   {
     icon: 'bulb' as const,
     iconColor: '#a5b4fc',
-    title: '4 Puzzle Types',
-    description: 'Mental Math, Memory Sequences, Logic Patterns, and Visual Puzzles. Each one tests a different cognitive skill.',
+    title: '7 Puzzle Types',
+    description: 'Mental Math, Memory Sequences, Logic Patterns, Visual Puzzles, Word Scramble, Odd One Out & Symbol Count.',
   },
   {
     icon: 'flame' as const,
@@ -32,15 +33,21 @@ export default function OnboardingScreen({ navigation }: Props) {
   const [page, setPage] = useState(0);
   const current = PAGES[page];
 
-  const handleNext = () => {
+  const completeOnboarding = async () => {
+    await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+  };
+
+  const handleNext = async () => {
     if (page < PAGES.length - 1) {
       setPage(page + 1);
     } else {
+      await completeOnboarding();
       navigation.replace('Home');
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    await completeOnboarding();
     navigation.replace('Home');
   };
 
