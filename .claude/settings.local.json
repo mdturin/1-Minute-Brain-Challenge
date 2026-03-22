@@ -16,7 +16,14 @@
       "Bash(winget list:*)",
       "Bash(npx tsc:*)",
       "Bash(npx jest:*)",
-      "Bash(npx expo:*)"
+      "Bash(npx expo:*)",
+      "Read(//c/Program Files/Google/Chrome/Application/**)",
+      "Read(//c/Program Files \\(x86\\)/Google/Chrome/Application/**)",
+      "Bash(node ../store-assets/capture-screenshots.mjs)",
+      "Bash(npm init:*)",
+      "Bash(node --input-type=module -e \"import pc from ''puppeteer-core''; console.log\\(''ok''\\)\")",
+      "Bash(node capture-screenshots.mjs)",
+      "Bash(node render-feature-graphic.mjs)"
     ]
   }
 }

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1024">
+<title>Feature Graphic – 1 Minute Brain Challenge</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+  body {
+    width: 1024px;
+    height: 500px;
+    overflow: hidden;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #09090b;
+  }
+
+  /* ── Background decoration ─────────────────────────────── */
+  .bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 80% 50%, rgba(99,102,241,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 300px at 15% 60%, rgba(34,197,94,0.10) 0%, transparent 60%),
+      #09090b;
+  }
+
+  /* subtle grid dots */
+  .bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  .root {
+    position: relative;
+    width: 1024px;
+    height: 500px;
+    display: flex;
+    align-items: center;
+    padding: 0 60px;
+    gap: 60px;
+  }
+
+  /* ── Left panel ──────────────────────────────────────────── */
+  .left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(99,102,241,0.18);
+    border: 1px solid rgba(165,180,252,0.30);
+    border-radius: 999px;
+    padding: 6px 16px;
+    width: fit-content;
+  }
+  .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: #6366f1; }
+  .badge-text { font-size: 13px; font-weight: 600; color: #a5b4fc; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .title {
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 1.05;
+    color: #f4f4f5;
+    letter-spacing: -1.5px;
+  }
+  .title em {
+    font-style: normal;
+    background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #4f46e5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 17px;
+    color: #71717a;
+    line-height: 1.5;
+    max-width: 380px;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #a1a1aa;
+    font-weight: 500;
+  }
+  .pill-icon { font-size: 15px; }
+
+  /* ── Right panel – phone mockup ──────────────────────────── */
+  .right {
+    width: 220px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .phone {
+    width: 200px;
+    background: #18181b;
+    border-radius: 36px;
+    border: 2px solid rgba(255,255,255,0.12);
+    padding: 18px 14px 22px;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.5),
+      0 40px 80px rgba(0,0,0,0.6),
+      0 0 60px rgba(99,102,241,0.25);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* top notch */
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 12px; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 999px;
+  }
+
+  /* header */
+  .ph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-top: 8px;
+  }
+  .ph-badge {
+    background: #22c55e;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+  }
+  .ph-score {
+    background: rgba(99,102,241,0.25);
+    border: 1px solid rgba(165,180,252,0.3);
+    color: #a5b4fc;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+
+  /* timer bar */
+  .ph-timer {
+    height: 5px;
+    background: #27272a;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .ph-timer-fill {
+    width: 62%;
+    height: 100%;
+    background: linear-gradient(90deg, #eab308, #f59e0b);
+    border-radius: 999px;
+  }
+
+  /* card */
+  .ph-card {
+    background: #09090b;
+    border-radius: 14px;
+    padding: 12px 10px 14px;
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+  .ph-puzzle-type {
+    text-align: center;
+    font-size: 8px;
+    color: #6366f1;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .ph-question {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #f4f4f5;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .ph-options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .ph-btn {
+    background: #6366f1;
+    border-radius: 999px;
+    padding: 6px 8px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #f9fafb;
+  }
+  .ph-btn.selected {
+    background: rgba(34,197,94,0.2);
+    border: 1px solid #22c55e;
+    color: #22c55e;
+  }
+
+  /* bottom stats */
+  .ph-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  .ph-stat {
+    text-align: center;
+  }
+  .ph-stat-val {
+    font-size: 12px;
+    font-weight: 800;
+    color: #f4f4f5;
+  }
+  .ph-stat-label {
+    font-size: 7px;
+    color: #52525b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* glow ring around phone */
+  .phone-glow {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50px;
+    background: radial-gradient(ellipse at center, rgba(99,102,241,0.15) 0%, transparent 70%);
+    z-index: -1;
+  }
+
+  /* ── Bottom tagline ──────────────────────────────────────── */
+  .tagline {
+    position: absolute;
+    bottom: 24px;
+    left: 60px;
+    font-size: 12px;
+    color: #3f3f46;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="root">
+
+  <!-- Left panel -->
+  <div class="left">
+    <div class="badge">
+      <div class="badge-dot"></div>
+      <span class="badge-text">Brain Training Game</span>
+    </div>
+
+    <div class="title">
+      1-Minute<br>
+      <em>Brain</em> Challenge
+    </div>
+
+    <div class="subtitle">
+      7 puzzle types. 60 seconds. How sharp is your mind?
+    </div>
+
+    <div class="pills">
+      <div class="pill"><span class="pill-icon">🧮</span> Mental Math</div>
+      <div class="pill"><span class="pill-icon">🧠</span> Memory</div>
+      <div class="pill"><span class="pill-icon">🔢</span> Logic</div>
+      <div class="pill"><span class="pill-icon">🔤</span> Word Scramble</div>
+      <div class="pill"><span class="pill-icon">🔷</span> Patterns</div>
+      <div class="pill"><span class="pill-icon">🏆</span> Daily Challenge</div>
+    </div>
+  </div>
+
+  <!-- Right panel – phone mockup -->
+  <div class="right">
+    <div class="phone-glow"></div>
+    <div class="phone">
+      <div class="ph-header">
+        <div class="ph-badge">EASY</div>
+        <div class="ph-score">⭐ 245</div>
+      </div>
+      <div class="ph-timer"><div class="ph-timer-fill"></div></div>
+      <div class="ph-card">
+        <div class="ph-puzzle-type">⚡ Mental Math</div>
+        <div class="ph-question">What is 17 × 4?</div>
+        <div class="ph-options">
+          <div class="ph-btn selected">68 ✓</div>
+          <div class="ph-btn" style="background:#3f3f46;">72</div>
+          <div class="ph-btn" style="background:#3f3f46;">64</div>
+          <div class="ph-btn" style="background:#3f3f46;">76</div>
+        </div>
+      </div>
+      <div class="ph-stats">
+        <div class="ph-stat">
+          <div class="ph-stat-val">🔥 4</div>
+          <div class="ph-stat-label">Streak</div>
+        </div>
+        <div class="ph-stat">
+          <div class="ph-stat-val">✅ 5</div>
+          <div class="ph-stat-label">Solved</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="tagline">Challenge your brain · Beat your score · Top the leaderboard</div>
+</body>
+</html>
