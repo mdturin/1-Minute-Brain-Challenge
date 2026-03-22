@@ -92,21 +92,18 @@ export default function GameScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     if (status !== 'playing') return;
-    if (remainingTime <= 0) {
-      handleGameEnd();
-      return;
-    }
     const intervalId = setInterval(() => {
-      setRemainingTime((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalId);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setRemainingTime((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
     return () => clearInterval(intervalId);
-  }, [remainingTime, status]);
+  }, [status]);
+
+  useEffect(() => {
+    if (remainingTime === 0 && status === 'playing') {
+      handleGameEnd();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remainingTime]);
 
   const handleGameEnd = async () => {
     if (status === 'finished') return;
@@ -278,7 +275,7 @@ export default function GameScreen({ navigation, route }: Props) {
         </View>
 
         {/* Feedback Toast */}
-        <Animated.View style={[styles.feedbackToast, { opacity: feedbackOpacity }]}>
+        <Animated.View pointerEvents="none" style={[styles.feedbackToast, { opacity: feedbackOpacity }]}>
           {lastAnswer === 'correct' ? (
             <View style={styles.feedbackRow}>
               <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
