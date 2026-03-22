@@ -13,7 +13,15 @@
       "Bash(node node_modules/expo/bin/cli start --help)",
       "Bash(gh pr:*)",
       "Bash(where gh:*)",
-      "Bash(winget list:*)"
+      "Bash(winget list:*)",
+      "Bash(xargs grep:*)",
+      "Bash(npx jest:*)",
+      "Bash(node -e \"try { require.resolve\\(''expo-asset''\\); console.log\\(''FOUND''\\); } catch { console.log\\(''NOT FOUND''\\); }\")",
+      "Bash(node -e \"console.log\\(require\\(''@testing-library/react-native/package.json''\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\(''react/package.json''\\).version, require\\(''react-test-renderer/package.json''\\)?.version || ''not found''\\)\")",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" pr list --head claude/charming-cray)",
+      "Bash(npx expo:*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" pr list --head claude/charming-cray --json number,title,state)"
     ]
   }
 }
