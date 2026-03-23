@@ -3,16 +3,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, Text, View, ActivityIndicator, Animated, Easing, TouchableOpacity, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
-import PrimaryButton from '../components/PrimaryButton';
 import BannerAd from '../components/BannerAd';
 import { DIFFICULTIES, orderedDifficulties, type Difficulty } from '../logic/difficulty';
 import { loadStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
 import { useSubscription } from '../logic/useSubscription';
 import { canStartGame, getCostForDifficulty, REFILL_PER_HOUR, REWARDED_AD_ENERGY_GRANT, REWARDED_AD_DAILY_LIMIT } from '../logic/energy';
-import { showRewardedWithCallbacks, getDailyRewardedCount, canWatchRewardedToday } from '../logic/ads';
+import { showRewardedWithCallbacks } from '../logic/ads';
 import { getTodayRecord, type DailyRecord } from '../storage/dailyChallenge';
 import { Ionicons } from '@expo/vector-icons';
+import { canWatchRewardedToday, getDailyRewardedCount } from '../logic/ads.native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
