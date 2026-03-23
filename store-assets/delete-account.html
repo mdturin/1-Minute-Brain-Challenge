@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Request account and data deletion for 1 Minute Brain Challenge" />
+  <title>Delete Account – 1 Minute Brain Challenge</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: #050816;
+      color: #cbd5e1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      padding: 40px 20px 80px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      box-shadow: 0 6px 24px rgba(99,102,241,0.4);
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -1px;
+      margin-bottom: 18px;
+    }
+
+    header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #f9fafb;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #111827;
+      border: 1px solid rgba(99,102,241,0.18);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f9fafb;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card h2 .icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(99,102,241,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+
+    .card p:last-child { margin-bottom: 0; }
+
+    /* ── What gets deleted list ── */
+    .delete-list {
+      list-style: none;
+      margin: 12px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .delete-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .delete-list li::before {
+      content: '✕';
+      color: #ef4444;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .keep-list li::before {
+      content: '✓';
+      color: #22c55e !important;
+    }
+
+    /* ── Email button ── */
+    .email-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #6366f1;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 999px;
+      text-decoration: none;
+      margin-top: 16px;
+      box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .email-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(99,102,241,0.5);
+    }
+
+    /* ── Warning box ── */
+    .warning {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #fca5a5;
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .warning::before {
+      content: '⚠';
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── Timeline ── */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 8px;
+    }
+
+    .timeline-step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    .timeline-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 32px;
+      width: 2px;
+      height: calc(100% - 8px);
+      background: rgba(99,102,241,0.2);
+    }
+
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #a5b4fc;
+      flex-shrink: 0;
+    }
+
+    .step-body {
+      padding: 4px 0 20px;
+    }
+
+    .step-body strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #f9fafb;
+      margin-bottom: 3px;
+    }
+
+    .step-body span {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: #a5b4fc;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .footer-links a:hover { text-decoration: underline; }
+
+    .footer-copy { font-size: 12px; color: #475569; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header>
+      <div class="logo-mark">1M</div>
+      <h1>Delete Your Account</h1>
+      <p>1 Minute Brain Challenge &mdash; Data Deletion Request</p>
+    </header>
+
+    <!-- How to request deletion -->
+    <div class="card">
+      <h2><span class="icon">✉️</span> How to Request Deletion</h2>
+      <p>
+        Send an email to the address below with the subject line
+        <strong style="color:#f9fafb">"Delete my account"</strong>.
+        Include the email address associated with your account so we can locate it.
+      </p>
+      <a class="email-btn" href="mailto:oneminutebrain@gmail.com?subject=Delete%20my%20account&body=Please%20delete%20my%20account%20and%20all%20associated%20data.%0A%0AAccount%20email%3A%20">
+        ✉ &nbsp;oneminutebrain@gmail.com
+      </a>
+      <div class="warning">
+        Account deletion is permanent and cannot be undone. Make sure you want to permanently remove all your data before submitting a request.
+      </div>
+    </div>
+
+    <!-- What gets deleted -->
+    <div class="card">
+      <h2><span class="icon">🗑️</span> What Gets Deleted</h2>
+      <p>The following data will be permanently removed within 30 days of your request:</p>
+      <ul class="delete-list">
+        <li>Your account credentials (email address and password hash)</li>
+        <li>Game scores, best scores, and average scores</li>
+        <li>Streak history and puzzle stats</li>
+        <li>Daily challenge completion records</li>
+        <li>All Firestore documents linked to your user ID</li>
+      </ul>
+    </div>
+
+    <!-- What is not deleted -->
+    <div class="card">
+      <h2><span class="icon">📋</span> What Is Not Deleted</h2>
+      <p>The following information is not linked to your account and is not affected:</p>
+      <ul class="delete-list keep-list">
+        <li>Anonymous or aggregated leaderboard statistics (not tied to your identity)</li>
+        <li>Local device data stored on your phone (clear this manually in your device settings)</li>
+      </ul>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card">
+      <h2><span class="icon">⏱️</span> What Happens Next</h2>
+      <div class="timeline">
+        <div class="timeline-step">
+          <div class="step-dot">1</div>
+          <div class="step-body">
+            <strong>We receive your email</strong>
+            <span>We'll send a confirmation reply within 2 business days.</span>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="step-dot">2</div>
+          <div class="step-body">
+            <strong>Account is deactivated</strong>
+            <span>Your account is disabled immediately upon verification.</span>
+          </div>
+        </div>
+        <div class="timeline-step">
+          <div class="step-dot">3</div>
+          <div class="step-body">
+            <strong>Data is permanently deleted</strong>
+            <span>All associated data is erased within 30 days of your request.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="mailto:oneminutebrain@gmail.com">Contact</a>
+      </div>
+      <p class="footer-copy">&copy; 2025 1 Minute Brain Challenge. All rights reserved.</p>
+    </footer>
+
+  </div>
+</body>
+</html>

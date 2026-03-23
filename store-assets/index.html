@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="1 Minute Brain Challenge – Train your brain with 7 puzzle types in 60-second speed rounds. Free on Android." />
+  <meta property="og:title" content="1 Minute Brain Challenge" />
+  <meta property="og:description" content="Train your brain with 7 puzzle types in 60-second speed rounds." />
+  <meta property="og:image" content="screenshots/feature-graphic.png" />
+  <meta property="og:type" content="website" />
+  <title>1 Minute Brain Challenge</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #050816;
+      --surface:   #111827;
+      --indigo:    #6366f1;
+      --indigo-lt: #a5b4fc;
+      --text:      #f9fafb;
+      --muted:     #cbd5e1;
+      --subtle:    #475569;
+      --border:    rgba(99,102,241,0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--muted);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ─────────────────────────────────────── */
+    .hero {
+      position: relative;
+      text-align: center;
+      padding: 72px 24px 64px;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% -10%, rgba(99,102,241,0.22) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,92,246,0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .logo-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      box-shadow: 0 8px 32px rgba(99,102,241,0.45);
+      margin-bottom: 24px;
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -1px;
+      position: relative;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 6vw, 48px);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+
+    .hero h1 span { color: var(--indigo-lt); }
+
+    .hero p {
+      max-width: 520px;
+      margin: 0 auto 32px;
+      font-size: 16px;
+      color: var(--muted);
+    }
+
+    .badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(99,102,241,0.08);
+      color: var(--indigo-lt);
+      letter-spacing: 0.3px;
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--indigo);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 14px 32px;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(99,102,241,0.55);
+    }
+
+    /* ── FEATURE GRAPHIC ──────────────────────────── */
+    .feature-graphic {
+      max-width: 900px;
+      margin: 0 auto 80px;
+      padding: 0 20px;
+    }
+
+    .feature-graphic img {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 16px 64px rgba(0,0,0,0.5);
+    }
+
+    /* ── SECTIONS ─────────────────────────────────── */
+    .section {
+      max-width: 880px;
+      margin: 0 auto 80px;
+      padding: 0 20px;
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--indigo-lt);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 40px;
+      line-height: 1.25;
+    }
+
+    /* ── PUZZLE GRID ──────────────────────────────── */
+    .puzzle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .puzzle-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .puzzle-card:hover {
+      border-color: rgba(99,102,241,0.4);
+      transform: translateY(-2px);
+    }
+
+    .puzzle-icon { font-size: 26px; margin-bottom: 10px; }
+
+    .puzzle-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .puzzle-card p {
+      font-size: 13px;
+      color: var(--subtle);
+      line-height: 1.55;
+    }
+
+    /* ── SCREENSHOTS ──────────────────────────────── */
+    .screenshots-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .screenshots-row img {
+      height: 400px;
+      width: auto;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    /* ── FEATURES LIST ────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .feature-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(99,102,241,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .feature-item h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .feature-item p {
+      font-size: 12px;
+      color: var(--subtle);
+      line-height: 1.5;
+    }
+
+    /* ── FOOTER ───────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 20px;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--indigo-lt);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .footer-links a:hover { text-decoration: underline; }
+
+    .footer-copy { font-size: 12px; color: var(--subtle); }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="logo-mark">1M</div>
+    <h1>1 Minute <span>Brain Challenge</span></h1>
+    <p>Train your brain with 7 different puzzle types in fast-paced 60-second rounds. Free to play on Android.</p>
+
+    <div class="badge-row">
+      <span class="badge">⚡ 7 Puzzle Types</span>
+      <span class="badge">🏆 Leaderboard</span>
+      <span class="badge">📅 Daily Challenge</span>
+      <span class="badge">🆓 Free to Play</span>
+    </div>
+
+    <a class="cta-btn" href="https://play.google.com/store/apps/details?id=com.oneminutebrain.challenge" target="_blank" rel="noopener">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M3.18 23.76c.3.17.65.2.98.08l11.65-6.74-2.56-2.56-10.07 9.22zM.5 1.4C.19 1.74 0 2.27 0 2.96v18.08c0 .69.19 1.22.5 1.56l.08.08 10.13-10.13v-.24L.58 1.32.5 1.4zM20.14 10.33l-2.89-1.67-2.88 2.88 2.88 2.88 2.9-1.68c.83-.48.83-1.93-.01-2.41zM4.16.24L15.81 6.98l-2.56 2.56L3.18.32A1.14 1.14 0 014.16.24z"/>
+      </svg>
+      Get it on Google Play
+    </a>
+  </section>
+
+  <!-- FEATURE GRAPHIC -->
+  <div class="feature-graphic">
+    <img src="screenshots/feature-graphic.png" alt="1 Minute Brain Challenge banner" />
+  </div>
+
+  <!-- PUZZLE TYPES -->
+  <div class="section">
+    <p class="section-label">What's Inside</p>
+    <h2 class="section-title">7 Types of Brain Puzzles</h2>
+    <div class="puzzle-grid">
+      <div class="puzzle-card">
+        <div class="puzzle-icon">🔢</div>
+        <h3>Mental Math</h3>
+        <p>Rapid-fire arithmetic — calculate fast and pick the correct answer before time runs out.</p>
+      </div>
+      <div class="puzzle-card">
+        <div class="puzzle-icon">🧠</div>
+        <h3>Memory Sequence</h3>
+        <p>Memorise a number sequence, then recall a specific position under pressure.</p>
+      </div>
+      <div class="puzzle-card">
+        <div class="puzzle-icon">💡</div>
+        <h3>Logic Pattern</h3>
+        <p>Spot the rule in a number or symbol sequence and predict what comes next.</p>
+      </div>
+      <div class="puzzle-card">
+        <div class="puzzle-icon">👁️</div>
+        <h3>Visual Pattern</h3>
+        <p>Complete symbol patterns by identifying what belongs in the missing slot.</p>
+      </div>
+      <div class="puzzle-card">
+        <div class="puzzle-icon">🔤</div>
+        <h3>Word Scramble</h3>
+        <p>Unscramble a jumbled word as fast as you can from four possible answers.</p>
+      </div>
+      <div class="puzzle-card">
+        <div class="puzzle-icon">🔍</div>
+        <h3>Odd One Out</h3>
+        <p>Find the item that doesn't belong in a group — speed and accuracy both count.</p>
+      </div>
+      <div class="puzzle-card">
+        <div class="puzzle-icon">🔣</div>
+        <h3>Symbol Count</h3>
+        <p>Count a specific symbol hidden in a crowded grid as accurately as possible.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREENSHOTS -->
+  <div class="section">
+    <p class="section-label">Screenshots</p>
+    <h2 class="section-title">See It in Action</h2>
+    <div class="screenshots-row">
+      <img src="screenshots/01-home.png" alt="Home screen" />
+      <img src="screenshots/02-gameplay-q1.png" alt="Gameplay – first puzzle" />
+      <img src="screenshots/03-gameplay-feedback.png" alt="Gameplay – answer feedback" />
+      <img src="screenshots/04-game-over.png" alt="Game over results" />
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="section">
+    <p class="section-label">Why Play</p>
+    <h2 class="section-title">Built for Daily Brain Training</h2>
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-dot">⏱️</div>
+        <div>
+          <h4>60-Second Rounds</h4>
+          <p>Quick sessions that fit any break — no long commitments required.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-dot">📅</div>
+        <div>
+          <h4>Daily Challenge</h4>
+          <p>A new seeded puzzle each day. Same for everyone — compare your result globally.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-dot">🏆</div>
+        <div>
+          <h4>Global Leaderboard</h4>
+          <p>Compete worldwide, track personal bests, and climb the rankings.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-dot">📈</div>
+        <div>
+          <h4>Progress Stats</h4>
+          <p>Track your scores, streaks, and average performance over time.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-dot">⚙️</div>
+        <div>
+          <h4>3 Difficulty Modes</h4>
+          <p>Easy, Medium, and Hard — each with different time limits and scoring.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-dot">☁️</div>
+        <div>
+          <h4>Cloud Sync</h4>
+          <p>Sign in to back up your progress and restore it on any Android device.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-links">
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="mailto:oneminutebrain@gmail.com">Contact Us</a>
+      <a href="https://play.google.com/store/apps/details?id=com.oneminutebrain.challenge" target="_blank" rel="noopener">Google Play</a>
+    </div>
+    <p class="footer-copy">&copy; 2025 1 Minute Brain Challenge. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>
