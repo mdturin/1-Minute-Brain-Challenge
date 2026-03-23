@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.oneminutebrain.challenge",
-      "versionCode": 1,
+      "versionCode": 260323.1,
       "adaptiveIcon": {
         "backgroundColor": "#050816",
         "foregroundImage": "./assets/android-icon-foreground.png",
