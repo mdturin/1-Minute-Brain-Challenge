@@ -23,7 +23,8 @@
       "Bash(npm init:*)",
       "Bash(node --input-type=module -e \"import pc from ''puppeteer-core''; console.log\\(''ok''\\)\")",
       "Bash(node capture-screenshots.mjs)",
-      "Bash(node render-feature-graphic.mjs)"
+      "Bash(node render-feature-graphic.mjs)",
+      "Bash(node render-icon.mjs)"
     ]
   }
 }
