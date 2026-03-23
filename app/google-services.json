@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1097445883559",
+    "project_id": "minute-brain-challange",
+    "storage_bucket": "minute-brain-challange.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097445883559:android:a0528290b461e87191e582",
+        "android_client_info": {
+          "package_name": "com.oneminutebrain.challenge"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1097445883559-q67pj6r6mtskec8g7g4gqks0jatseum1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmU-JooWQJOmHcraW5I23Uw_zR87fsX9g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1097445883559-q67pj6r6mtskec8g7g4gqks0jatseum1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

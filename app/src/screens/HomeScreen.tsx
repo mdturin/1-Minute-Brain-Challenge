@@ -167,17 +167,7 @@ export default function HomeScreen({ navigation }: Props) {
             <Ionicons name="bulb" size={28} color="#a5b4fc" />
             <Text style={styles.title}>1 Minute Brain Challenge</Text>
           </View>
-          {!isSubscribed ? (
-            <TouchableOpacity style={styles.upgradeButton} onPress={() => navigation.navigate('Paywall')}>
-              <Ionicons name="star" size={14} color="#eab308" />
-              <Text style={styles.upgradeButtonText}>Upgrade</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.subscribedBadge}>
-              <Ionicons name="star" size={14} color="#eab308" />
-              <Text style={styles.subscribedBadgeText}>Unlimited</Text>
-            </View>
-          )}
+          {/* SHOW_UPGRADE: set to true when IAP is ready */}
         </View>
 
         {/* Day Streak Badge */}

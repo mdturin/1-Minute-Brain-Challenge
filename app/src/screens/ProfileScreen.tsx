@@ -485,29 +485,7 @@ export default function ProfileScreen({ navigation }: Props) {
                 </TouchableOpacity>
               ) : null}
             </View>
-          ) : (
-            <View style={styles.upgradeCard}>
-              <View style={styles.upgradeCardRow}>
-                <Ionicons name="star-outline" size={20} color="#eab308" />
-                <View style={styles.upgradeCardText}>
-                  <Text style={styles.upgradeCardTitle}>Upgrade to Unlimited Energy</Text>
-                  <Text style={styles.upgradeCardSubtext}>Play without limits, no energy costs</Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                style={styles.upgradeButton}
-                onPress={() => navigation.navigate('Paywall')}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.upgradeButtonText}>View Plans</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.restoreLink} onPress={restore} disabled={isRestoring}>
-                <Text style={styles.restoreLinkText}>
-                  {isRestoring ? 'Restoring...' : 'Restore Purchases'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          ) : null /* SHOW_UPGRADE: restore upgrade card when IAP is ready */}
         </View>
       </ScrollView>
     </SafeAreaView>
