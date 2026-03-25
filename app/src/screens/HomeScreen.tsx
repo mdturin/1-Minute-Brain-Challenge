@@ -12,7 +12,7 @@ import { canStartGame, getCostForDifficulty, REFILL_PER_HOUR, REWARDED_AD_ENERGY
 import { showRewardedWithCallbacks } from '../logic/ads';
 import { getTodayRecord, type DailyRecord } from '../storage/dailyChallenge';
 import { Ionicons } from '@expo/vector-icons';
-import { canWatchRewardedToday, getDailyRewardedCount } from '../logic/ads.native';
+import { canWatchRewardedToday, getDailyRewardedCount } from '../logic/ads';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
