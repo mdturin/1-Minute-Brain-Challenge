@@ -18,6 +18,7 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SubscriptionProvider } from './src/logic/useSubscription';
 import './src/logic/firebaseConfig'; // Initialize Firebase
+import { initializeAds } from './src/logic/adsInit';
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -42,6 +43,10 @@ export default function App() {
   const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Home' | null>(null);
 
   useEffect(() => {
+    initializeAds().catch(() => {
+      // Non-fatal — app continues if AdMob init fails at cold start
+    });
+
     AsyncStorage.getItem('hasSeenOnboarding').then(val => {
       setInitialRoute(val === 'true' ? 'Home' : 'Onboarding');
     });
