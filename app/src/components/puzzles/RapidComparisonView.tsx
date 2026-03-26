@@ -10,8 +10,8 @@ type Props = {
 
 export default function RapidComparisonView({ puzzle, onAnswer }: Props) {
   const questionWord = (puzzle.meta?.questionWord as string) ?? 'BIGGER';
-  // prompt is "A  vs  B"
-  const [leftVal, rightVal] = puzzle.prompt.split('  vs  ');
+  // prompt is "A  vs  B  vs  C"
+  const vals = puzzle.prompt.split('  vs  ');
 
   return (
     <View style={styles.container}>
@@ -21,13 +21,14 @@ export default function RapidComparisonView({ puzzle, onAnswer }: Props) {
       </Text>
 
       <View style={styles.compRow}>
-        <View style={styles.valueBox}>
-          <Text style={styles.valueText}>{leftVal}</Text>
-        </View>
-        <Text style={styles.vsText}>vs</Text>
-        <View style={styles.valueBox}>
-          <Text style={styles.valueText}>{rightVal}</Text>
-        </View>
+        {vals.map((val, i) => (
+          <React.Fragment key={val + i}>
+            {i > 0 && <Text style={styles.vsText}>vs</Text>}
+            <View style={styles.valueBox}>
+              <Text style={styles.valueText}>{val}</Text>
+            </View>
+          </React.Fragment>
+        ))}
       </View>
 
       <View style={styles.optionsContainer}>
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
+    gap: 8,
     marginBottom: 32,
   },
   valueBox: {
@@ -79,12 +80,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#6366f1',
-    paddingVertical: 20,
-    paddingHorizontal: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
     alignItems: 'center',
   },
   valueText: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '800',
     color: '#a5b4fc',
     textAlign: 'center',
