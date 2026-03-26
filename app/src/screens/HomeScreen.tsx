@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, Text, View, ActivityIndicator, Animated, Easing, TouchableOpacity, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import type { RootStackParamList } from '../../App';
 import BannerAd from '../components/BannerAd';
 import { DIFFICULTIES, orderedDifficulties, type Difficulty } from '../logic/difficulty';
@@ -38,7 +39,7 @@ function formatCountdown(ms: number): string {
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
-export default function HomeScreen({ navigation }: Props) {
+export default function HomeScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(true);
   const [bestScore, setBestScore] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
@@ -67,21 +68,29 @@ export default function HomeScreen({ navigation }: Props) {
     }).start();
   }, [energy, isAnimatingPlay, animatedEnergyValue]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [stats, record] = await Promise.all([
-        loadStats(),
-        getTodayRecord(),
-      ]);
-      setBestScore(stats.bestScore);
-      setGamesPlayed(stats.gamesPlayed);
-      setAverageScore(stats.gamesPlayed > 0 ? Math.round(stats.totalScore / stats.gamesPlayed) : 0);
-      setCurrentDayStreak(stats.currentDayStreak);
-      setDailyRecord(record);
-      setLoading(false);
-    };
-    void fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        const [stats, record] = await Promise.all([
+          loadStats(),
+          getTodayRecord(),
+        ]);
+        // If the game screen passed back updated stats, use whichever is higher
+        // (guards against Firestore write not yet committing on web)
+        const passed = route.params?.updatedStats;
+        const best = passed ? Math.max(stats.bestScore, passed.bestScore) : stats.bestScore;
+        const games = passed ? Math.max(stats.gamesPlayed, passed.gamesPlayed) : stats.gamesPlayed;
+        const total = passed ? Math.max(stats.totalScore, passed.totalScore) : stats.totalScore;
+        setBestScore(best);
+        setGamesPlayed(games);
+        setAverageScore(games > 0 ? Math.round(total / games) : 0);
+        setCurrentDayStreak(stats.currentDayStreak);
+        setDailyRecord(record);
+        setLoading(false);
+      };
+      void fetchData();
+    }, [route.params?.updatedStats]),
+  );
 
   // Countdown to daily reset
   useEffect(() => {

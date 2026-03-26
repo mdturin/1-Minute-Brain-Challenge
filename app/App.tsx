@@ -29,7 +29,7 @@ export type RootStackParamList = {
   Login: undefined;
   Consent: undefined;
   UserInfo: undefined;
-  Home: undefined;
+  Home: { updatedStats?: { bestScore: number; gamesPlayed: number; totalScore: number } } | undefined;
   Game: {
     difficulty: 'easy' | 'medium' | 'hard';
     isDailyChallenge?: boolean;

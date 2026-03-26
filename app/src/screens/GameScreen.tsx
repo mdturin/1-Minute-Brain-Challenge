@@ -31,7 +31,7 @@ import StroopEffectView from '../components/puzzles/StroopEffectView';
 import CountDistractionView from '../components/puzzles/CountDistractionView';
 import SpotMisspellingView from '../components/puzzles/SpotMisspellingView';
 import CategoryClashView from '../components/puzzles/CategoryClashView';
-import { updateStats } from '../storage/stats';
+import { updateStats, loadStats, type GameStats } from '../storage/stats';
 import { markTodayCompleted } from '../storage/dailyChallenge';
 import { canShowInterstitialNow, showInterstitialWithCallbacks } from '../logic/ads';
 import { maybeRequestReview } from '../logic/storeReview';
@@ -115,10 +115,23 @@ export default function GameScreen({ navigation, route }: Props) {
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [puzzlesSolved, setPuzzlesSolved] = useState(0);
+
+  // Refs so handleGameEnd always reads the latest values regardless of closure timing
+  const scoreRef = useRef(0);
+  const maxStreakRef = useRef(0);
+  const puzzlesSolvedRef = useRef(0);
   const [status, setStatus] = useState<'playing' | 'finished'>('playing');
   const [showSummary, setShowSummary] = useState(false);
   const [lastAnswer, setLastAnswer] = useState<'correct' | 'wrong' | null>(null);
   const [lastPoints, setLastPoints] = useState(0);
+  const [savedStats, setSavedStats] = useState<GameStats | null>(null);
+
+  // Refs are updated synchronously inside state setters (see handleAnswer / setStreak callbacks)
+
+  // Load existing stats once on mount so they're ready when game ends
+  useEffect(() => {
+    loadStats().then(setSavedStats).catch(() => {});
+  }, []);
 
   const feedbackOpacity = useRef(new Animated.Value(0)).current;
 
@@ -129,6 +142,9 @@ export default function GameScreen({ navigation, route }: Props) {
     setMaxStreak(0);
     setPuzzlesSolved(0);
     setStatus('playing');
+    scoreRef.current = 0;
+    maxStreakRef.current = 0;
+    puzzlesSolvedRef.current = 0;
     setCurrentPuzzle(generateRandomPuzzle(difficultyKey, undefined, rngRef.current));
   }, [difficultyKey]);
 
@@ -149,18 +165,32 @@ export default function GameScreen({ navigation, route }: Props) {
 
   const handleGameEnd = async () => {
     if (status === 'finished') return;
+    // Read from refs to avoid stale closure (score/maxStreak state may lag behind)
+    const finalScore = scoreRef.current;
+    const finalMaxStreak = maxStreakRef.current;
     setStatus('finished');
     setShowSummary(true);
     try {
       if (isDailyChallenge) {
-        await markTodayCompleted(score);
+        await markTodayCompleted(finalScore);
       }
-      await updateStats({ lastScore: score, lastMaxStreak: maxStreak });
+      await updateStats({ lastScore: finalScore, lastMaxStreak: finalMaxStreak });
+      // Update local stats snapshot so the summary modal shows fresh values
+      setSavedStats((prev) => {
+        const base = prev ?? { bestScore: 0, gamesPlayed: 0, totalScore: 0, bestStreak: 0, currentDayStreak: 0, longestDayStreak: 0, lastPlayedDate: '' };
+        return {
+          ...base,
+          bestScore: Math.max(base.bestScore, finalScore),
+          gamesPlayed: base.gamesPlayed + 1,
+          totalScore: base.totalScore + finalScore,
+          bestStreak: Math.max(base.bestStreak, finalMaxStreak),
+        };
+      });
     } catch (error) {
       console.error("Error updating stats:", error);
     }
     // Prompt for app store review after enough games (non-blocking)
-    void maybeRequestReview(puzzlesSolved + 1);
+    void maybeRequestReview(puzzlesSolvedRef.current + 1);
   };
 
   const showFeedback = (type: 'correct' | 'wrong', points: number) => {
@@ -185,13 +215,25 @@ export default function GameScreen({ navigation, route }: Props) {
       remainingFraction,
     });
 
-    setScore((prev) => prev + delta);
+    setScore((prev) => {
+      const next = prev + delta;
+      scoreRef.current = next;  // sync ref immediately
+      return next;
+    });
 
     if (isCorrect) {
-      setPuzzlesSolved((prev) => prev + 1);
+      setPuzzlesSolved((prev) => {
+        const next = prev + 1;
+        puzzlesSolvedRef.current = next;
+        return next;
+      });
       setStreak((prev) => {
         const next = prev + 1;
-        setMaxStreak((m) => Math.max(m, next));
+        setMaxStreak((m) => {
+          const newMax = Math.max(m, next);
+          maxStreakRef.current = newMax;
+          return newMax;
+        });
         return next;
       });
       showFeedback('correct', delta);
@@ -207,7 +249,13 @@ export default function GameScreen({ navigation, route }: Props) {
     if (isDailyChallenge) {
       navigation.replace('DailyChallenge');
     } else {
-      navigation.replace('Home');
+      navigation.replace('Home', savedStats ? {
+        updatedStats: {
+          bestScore: savedStats.bestScore,
+          gamesPlayed: savedStats.gamesPlayed,
+          totalScore: savedStats.totalScore,
+        },
+      } : undefined);
     }
   };
 
@@ -233,6 +281,9 @@ export default function GameScreen({ navigation, route }: Props) {
       setPuzzlesSolved(0);
       setStatus('playing');
       setCurrentPuzzle(generateRandomPuzzle(difficultyKey));
+      scoreRef.current = 0;
+      maxStreakRef.current = 0;
+      puzzlesSolvedRef.current = 0;
     };
     if (canShowInterstitialNow()) {
       showInterstitialWithCallbacks(resetAndPlay, resetAndPlay);
@@ -413,6 +464,29 @@ export default function GameScreen({ navigation, route }: Props) {
                   <Text style={styles.modalStatLabel}>Avg Time</Text>
                 </View>
               </View>
+
+              {savedStats && (
+                <View style={styles.modalAllTimeRow}>
+                  <View style={styles.modalAllTimeItem}>
+                    <Text style={styles.modalAllTimeLabel}>All-Time Best</Text>
+                    <Text style={styles.modalAllTimeValue}>{savedStats.bestScore.toLocaleString()}</Text>
+                  </View>
+                  <View style={styles.modalAllTimeDivider} />
+                  <View style={styles.modalAllTimeItem}>
+                    <Text style={styles.modalAllTimeLabel}>Avg Score</Text>
+                    <Text style={styles.modalAllTimeValue}>
+                      {savedStats.gamesPlayed > 0
+                        ? Math.round(savedStats.totalScore / savedStats.gamesPlayed).toLocaleString()
+                        : '—'}
+                    </Text>
+                  </View>
+                  <View style={styles.modalAllTimeDivider} />
+                  <View style={styles.modalAllTimeItem}>
+                    <Text style={styles.modalAllTimeLabel}>Games</Text>
+                    <Text style={styles.modalAllTimeValue}>{savedStats.gamesPlayed}</Text>
+                  </View>
+                </View>
+              )}
 
               {!isDailyChallenge && (
                 <TouchableOpacity style={styles.modalPlayAgain} onPress={handlePlayAgain} activeOpacity={0.8}>
@@ -623,6 +697,39 @@ const styles = StyleSheet.create({
   modalStatDivider: {
     width: 1,
     height: 28,
+    backgroundColor: '#1e293b',
+  },
+  modalAllTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    marginBottom: 16,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(165,180,252,0.1)',
+  },
+  modalAllTimeItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  modalAllTimeLabel: {
+    fontSize: 10,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  modalAllTimeValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#a5b4fc',
+  },
+  modalAllTimeDivider: {
+    width: 1,
+    height: 24,
     backgroundColor: '#1e293b',
   },
   modalPlayAgain: {
