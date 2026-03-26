@@ -7,6 +7,7 @@ import {
   signInAnonymously as firebaseSignInAnonymously,
   GoogleAuthProvider,
   signInWithCredential,
+  linkWithCredential,
   updateProfile,
 } from "firebase/auth";
 import { auth } from "./firebaseConfig";
@@ -16,6 +17,7 @@ export interface AuthUser {
   uid: string;
   email: string | null;
   displayName: string | null;
+  isAnonymous: boolean;
 }
 
 export const signUp = async (
@@ -24,21 +26,17 @@ export const signUp = async (
 ): Promise<AuthUser> => {
   if (!auth) throw new Error("Firebase is not configured");
   try {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password,
-    );
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     try {
       await migrateLocalDataToCloud();
     } catch (migrationError) {
       console.warn("Migration failed after sign up:", migrationError);
-      // Continue anyway, as user is created
     }
     return {
       uid: userCredential.user.uid,
       email: userCredential.user.email,
       displayName: userCredential.user.displayName,
+      isAnonymous: false,
     };
   } catch (error) {
     console.error("Sign up failed:", error);
@@ -52,21 +50,17 @@ export const signIn = async (
 ): Promise<AuthUser> => {
   if (!auth) throw new Error("Firebase is not configured");
   try {
-    const userCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password,
-    );
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
     try {
       await migrateLocalDataToCloud();
     } catch (migrationError) {
       console.warn("Migration failed after sign in:", migrationError);
-      // Continue anyway
     }
     return {
       uid: userCredential.user.uid,
       email: userCredential.user.email,
       displayName: userCredential.user.displayName,
+      isAnonymous: false,
     };
   } catch (error) {
     console.error("Sign in failed:", error);
@@ -87,6 +81,7 @@ export const getCurrentUser = (): AuthUser | null => {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
+      isAnonymous: user.isAnonymous,
     };
   }
   return null;
@@ -100,37 +95,52 @@ export const resetPassword = async (email: string): Promise<void> => {
 export const signInAsGuest = async (): Promise<AuthUser> => {
   if (!auth) throw new Error("Firebase is not configured");
   const result = await firebaseSignInAnonymously(auth);
-  try {
-    await migrateLocalDataToCloud();
-  } catch {}
-  return { uid: result.user.uid, email: null, displayName: 'Guest' };
+  try { await migrateLocalDataToCloud(); } catch {}
+  return { uid: result.user.uid, email: null, displayName: 'Guest', isAnonymous: true };
 };
+
+async function fetchAndApplyGoogleProfile(user: any, accessToken: string) {
+  try {
+    const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const info = await resp.json();
+    await updateProfile(user, {
+      displayName: info.name ?? info.email ?? null,
+      photoURL: info.picture ?? null,
+    });
+  } catch {}
+}
 
 export const signInWithGoogle = async (idToken: string | null, accessToken: string | null = null): Promise<AuthUser> => {
   if (!auth) throw new Error("Firebase is not configured");
   const credential = GoogleAuthProvider.credential(idToken, accessToken);
   const result = await signInWithCredential(auth, credential);
-  // If signed in via access token only, Firebase won't populate displayName/photoURL.
-  // Fetch from Google userinfo endpoint and update the profile.
   if (accessToken && !result.user.displayName) {
-    try {
-      const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const info = await resp.json();
-      await updateProfile(result.user, {
-        displayName: info.name ?? info.email ?? null,
-        photoURL: info.picture ?? null,
-      });
-    } catch {}
+    await fetchAndApplyGoogleProfile(result.user, accessToken);
   }
-  try {
-    await migrateLocalDataToCloud();
-  } catch {}
+  try { await migrateLocalDataToCloud(); } catch {}
   return {
     uid: result.user.uid,
     email: result.user.email,
     displayName: result.user.displayName,
+    isAnonymous: false,
+  };
+};
+
+export const linkWithGoogle = async (idToken: string | null, accessToken: string | null = null): Promise<AuthUser> => {
+  if (!auth || !auth.currentUser) throw new Error("No user signed in");
+  const credential = GoogleAuthProvider.credential(idToken, accessToken);
+  const result = await linkWithCredential(auth.currentUser, credential);
+  if (accessToken && !result.user.displayName) {
+    await fetchAndApplyGoogleProfile(result.user, accessToken);
+  }
+  try { await migrateLocalDataToCloud(); } catch {}
+  return {
+    uid: result.user.uid,
+    email: result.user.email,
+    displayName: result.user.displayName,
+    isAnonymous: false,
   };
 };
 
@@ -147,6 +157,7 @@ export const onAuthStateChanged = (
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        isAnonymous: user.isAnonymous,
       });
     } else {
       callback(null);

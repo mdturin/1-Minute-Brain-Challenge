@@ -2,14 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import Constants from 'expo-constants';
 import type { RootStackParamList } from '../../App';
 import { loadUserProfile, saveUserProfile, type UserProfile } from '../storage/userProfile';
 import { loadStats, type GameStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
 import PrimaryButton from '../components/PrimaryButton';
-import { signIn, signUp, signOut, onAuthStateChanged, resetPassword, type AuthUser } from '../logic/auth';
+import { signIn, signUp, signOut, onAuthStateChanged, resetPassword, linkWithGoogle, signInWithGoogle, type AuthUser } from '../logic/auth';
 import { useSubscription } from '../logic/useSubscription';
 import { Ionicons } from '@expo/vector-icons';
+
+WebBrowser.maybeCompleteAuthSession();
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -53,8 +58,67 @@ export default function ProfileScreen({ navigation }: Props) {
   const [resetSent, setResetSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
 
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkError, setLinkError] = useState('');
+
   const { energy, maxEnergy, isLoading: energyLoading } = useEnergy();
   const { isSubscribed, subscriptionTier, restore, isRestoring, deepLinkManage } = useSubscription();
+
+  const [googleSignInLoading, setGoogleSignInLoading] = useState(false);
+
+  // Hook used for linking guest → Google (logged-in guest state)
+  const [, googleLinkResponse, googleLinkPromptAsync] = Google.useAuthRequest({
+    webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+    androidClientId: Constants.expoConfig?.extra?.googleAndroidClientId,
+  });
+
+  // Hook used for signing in with Google from the auth (logged-out) form
+  const [, googleSignInResponse, googleSignInPromptAsync] = Google.useAuthRequest({
+    webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+    androidClientId: Constants.expoConfig?.extra?.googleAndroidClientId,
+  });
+
+  useEffect(() => {
+    if (googleLinkResponse?.type === 'success') {
+      const params = googleLinkResponse.params as Record<string, string>;
+      const idToken = googleLinkResponse.authentication?.idToken ?? params?.id_token ?? null;
+      const accessToken = googleLinkResponse.authentication?.accessToken ?? params?.access_token ?? null;
+      setLinkLoading(true);
+      linkWithGoogle(idToken, accessToken)
+        .then(() => { setLinkError(''); setLinkLoading(false); })
+        .catch(() => { setLinkError('Could not link Google account. Try again.'); setLinkLoading(false); });
+    } else if (googleLinkResponse?.type === 'error') {
+      setLinkError('Google sign-in was cancelled.');
+      setLinkLoading(false);
+    }
+  }, [googleLinkResponse]);
+
+  useEffect(() => {
+    if (googleSignInResponse?.type === 'success') {
+      const params = googleSignInResponse.params as Record<string, string>;
+      const idToken = googleSignInResponse.authentication?.idToken ?? params?.id_token ?? null;
+      const accessToken = googleSignInResponse.authentication?.accessToken ?? params?.access_token ?? null;
+      setGoogleSignInLoading(true);
+      signInWithGoogle(idToken, accessToken)
+        .then(() => setGoogleSignInLoading(false))
+        .catch(() => { setAuthError('Google sign-in failed. Please try again.'); setGoogleSignInLoading(false); });
+    } else if (googleSignInResponse?.type === 'error') {
+      setAuthError('Google sign-in was cancelled.');
+      setGoogleSignInLoading(false);
+    }
+  }, [googleSignInResponse]);
+
+  const handleLinkGoogle = () => {
+    setLinkError('');
+    setLinkLoading(true);
+    googleLinkPromptAsync().catch(() => setLinkLoading(false));
+  };
+
+  const handleGoogleSignIn = () => {
+    setAuthError('');
+    setGoogleSignInLoading(true);
+    googleSignInPromptAsync().catch(() => setGoogleSignInLoading(false));
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged((authUser) => {
@@ -278,6 +342,19 @@ export default function ProfileScreen({ navigation }: Props) {
               <View style={styles.dividerLine} />
             </View>
 
+            {/* Google Sign In */}
+            <TouchableOpacity
+              style={[styles.googleSignInBtn, googleSignInLoading && styles.authButtonDisabled]}
+              onPress={handleGoogleSignIn}
+              disabled={googleSignInLoading}
+              activeOpacity={0.85}
+            >
+              {googleSignInLoading
+                ? <ActivityIndicator size="small" color="#111" />
+                : <><Text style={styles.googleSignInBtnG}>G</Text><Text style={styles.googleSignInBtnText}>Continue with Google</Text></>
+              }
+            </TouchableOpacity>
+
             {/* Continue as guest */}
             <TouchableOpacity
               style={styles.guestButton}
@@ -348,6 +425,31 @@ export default function ProfileScreen({ navigation }: Props) {
             <Ionicons name="log-out-outline" size={22} color="#ef4444" />
           </TouchableOpacity>
         </View>
+
+        {/* Guest upgrade banner */}
+        {user.isAnonymous && (
+          <View style={styles.guestUpgradeBanner}>
+            <View style={styles.guestUpgradeLeft}>
+              <Ionicons name="person-circle-outline" size={22} color="#fbbf24" />
+              <View>
+                <Text style={styles.guestUpgradeTitle}>You're browsing as a Guest</Text>
+                <Text style={styles.guestUpgradeSubtext}>Sign in to save your progress</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[styles.googleLinkBtn, linkLoading && { opacity: 0.5 }]}
+              onPress={handleLinkGoogle}
+              disabled={linkLoading}
+              activeOpacity={0.8}
+            >
+              {linkLoading
+                ? <ActivityIndicator size="small" color="#111" />
+                : <><Text style={styles.googleLinkBtnG}>G</Text><Text style={styles.googleLinkBtnText}>Sign in</Text></>
+              }
+            </TouchableOpacity>
+          </View>
+        )}
+        {linkError ? <Text style={styles.linkErrorText}>{linkError}</Text> : null}
 
         {/* Avatar Card */}
         <View style={styles.profileCard}>
@@ -940,5 +1042,80 @@ const styles = StyleSheet.create({
   termsLink: {
     color: '#6366f1',
     fontWeight: '600',
+  },
+  guestUpgradeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(251,191,36,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.2)',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 8,
+    gap: 10,
+  },
+  guestUpgradeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  guestUpgradeTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fbbf24',
+  },
+  guestUpgradeSubtext: {
+    fontSize: 11,
+    color: '#94a3b8',
+    marginTop: 1,
+  },
+  googleLinkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  googleLinkBtnG: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#4285F4',
+  },
+  googleLinkBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  linkErrorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  googleSignInBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#ffffff',
+    paddingVertical: 14,
+    borderRadius: 14,
+    width: '100%',
+    marginBottom: 12,
+  },
+  googleSignInBtnG: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#4285F4',
+  },
+  googleSignInBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
   },
 });
