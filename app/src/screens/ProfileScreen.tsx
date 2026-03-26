@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
@@ -15,6 +15,27 @@ import { useSubscription } from '../logic/useSubscription';
 import { Ionicons } from '@expo/vector-icons';
 
 WebBrowser.maybeCompleteAuthSession();
+
+const AVATARS = [
+  { id: 'bolt',     icon: 'flash'            as const, bg: '#4f46e5', color: '#c7d2fe' },
+  { id: 'fire',     icon: 'flame'            as const, bg: '#dc2626', color: '#fecaca' },
+  { id: 'star',     icon: 'star'             as const, bg: '#d97706', color: '#fde68a' },
+  { id: 'trophy',   icon: 'trophy'           as const, bg: '#0284c7', color: '#bae6fd' },
+  { id: 'rocket',   icon: 'rocket'           as const, bg: '#0f766e', color: '#99f6e4' },
+  { id: 'pulse',    icon: 'pulse'            as const, bg: '#7c3aed', color: '#ddd6fe' },
+  { id: 'eye',      icon: 'eye'              as const, bg: '#0e7490', color: '#a5f3fc' },
+  { id: 'compass',  icon: 'compass'          as const, bg: '#166534', color: '#bbf7d0' },
+  { id: 'game',     icon: 'game-controller'  as const, bg: '#9333ea', color: '#e9d5ff' },
+  { id: 'infinite', icon: 'infinite'         as const, bg: '#374151', color: '#d1d5db' },
+];
+
+function getAvatar(avatarId: string | undefined, uid: string) {
+  if (avatarId) {
+    const found = AVATARS.find(a => a.id === avatarId);
+    if (found) return found;
+  }
+  return AVATARS[uid.charCodeAt(0) % AVATARS.length];
+}
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -60,6 +81,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const [linkLoading, setLinkLoading] = useState(false);
   const [linkError, setLinkError] = useState('');
+  const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
 
   const { energy, maxEnergy, isLoading: energyLoading } = useEnergy();
   const { isSubscribed, subscriptionTier, restore, isRestoring, deepLinkManage } = useSubscription();
@@ -403,13 +425,6 @@ export default function ProfileScreen({ navigation }: Props) {
     );
   }
 
-  const initials = profile.displayName
-    .split(' ')
-    .filter(Boolean)
-    .map((part) => part[0]?.toUpperCase())
-    .slice(0, 2)
-    .join('') || 'G';
-
   const averageScore = stats.gamesPlayed > 0 ? Math.round(stats.totalScore / stats.gamesPlayed) : 0;
 
   return (
@@ -453,9 +468,14 @@ export default function ProfileScreen({ navigation }: Props) {
 
         {/* Avatar Card */}
         <View style={styles.profileCard}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{initials}</Text>
-          </View>
+          <TouchableOpacity style={styles.avatarWrapper} onPress={() => setAvatarPickerVisible(true)} activeOpacity={0.8}>
+            <View style={[styles.avatarCircle, { backgroundColor: getAvatar(profile.avatarId, user.uid).bg }]}>
+              <Ionicons name={getAvatar(profile.avatarId, user.uid).icon} size={34} color={getAvatar(profile.avatarId, user.uid).color} />
+            </View>
+            <View style={styles.avatarEditBadge}>
+              <Ionicons name="camera" size={12} color="#fff" />
+            </View>
+          </TouchableOpacity>
           <Text style={styles.profileName}>{profile.displayName || 'Guest'}</Text>
           {user.email && <Text style={styles.profileEmail}>{user.email}</Text>}
           {isSubscribed ? (
@@ -590,6 +610,49 @@ export default function ProfileScreen({ navigation }: Props) {
           ) : null /* SHOW_UPGRADE: restore upgrade card when IAP is ready */}
         </View>
       </ScrollView>
+
+      {/* Avatar Picker Modal */}
+      <Modal visible={avatarPickerVisible} animationType="slide" presentationStyle="pageSheet" transparent={false}>
+        <View style={styles.avatarModal}>
+          <View style={styles.avatarModalHeader}>
+            <Text style={styles.avatarModalTitle}>Choose Avatar</Text>
+            <TouchableOpacity onPress={() => setAvatarPickerVisible(false)}>
+              <Ionicons name="close" size={24} color="#94a3b8" />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={AVATARS}
+            keyExtractor={item => item.id}
+            numColumns={2}
+            contentContainerStyle={styles.avatarGrid}
+            columnWrapperStyle={styles.avatarGridRow}
+            renderItem={({ item }) => {
+              const selected = (profile.avatarId ?? getAvatar(undefined, user.uid).id) === item.id;
+              return (
+                <TouchableOpacity
+                  style={[styles.avatarOption, selected && styles.avatarOptionSelected]}
+                  onPress={async () => {
+                    const updated = { ...profile, avatarId: item.id };
+                    setProfile(updated);
+                    setAvatarPickerVisible(false);
+                    try { await saveUserProfile(updated); } catch {}
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.avatarOptionCircle, { backgroundColor: item.bg }]}>
+                    <Ionicons name={item.icon} size={40} color={item.color} />
+                  </View>
+                  {selected && (
+                    <View style={styles.avatarCheckBadge}>
+                      <Ionicons name="checkmark-circle" size={22} color="#6366f1" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -649,11 +712,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-  },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#f9fafb',
   },
   profileName: {
     fontSize: 20,
@@ -1117,5 +1175,76 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#111827',
+  },
+  // Avatar picker
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#6366f1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#111827',
+  },
+  avatarModal: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+  },
+  avatarModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+  },
+  avatarModalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#f9fafb',
+  },
+  avatarGrid: {
+    padding: 20,
+  },
+  avatarGridRow: {
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  avatarOption: {
+    width: '47%',
+    aspectRatio: 1,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#1e293b',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    backgroundColor: '#111827',
+  },
+  avatarOptionSelected: {
+    borderColor: '#6366f1',
+    backgroundColor: 'rgba(99,102,241,0.08)',
+  },
+  avatarOptionCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarCheckBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
 });

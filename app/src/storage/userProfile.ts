@@ -8,6 +8,7 @@ const STORAGE_KEY = "one-minute-brain-challenge/user-profile";
 export type UserProfile = {
   displayName: string;
   avatarType: "initials" | "image";
+  avatarId?: string;
   age?: number;
   country?: string;
 };
