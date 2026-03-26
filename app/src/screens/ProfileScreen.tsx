@@ -705,9 +705,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(165,180,252,0.1)',
   },
   avatarCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: '#4f46e5',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1182,10 +1182,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   avatarEmoji: {
-    fontSize: 34,
+    fontSize: 52,
   },
   avatarOptionEmoji: {
-    fontSize: 44,
+    fontSize: 52,
   },
   avatarEditBadge: {
     position: 'absolute',
