@@ -26,7 +26,11 @@
       "Bash(node render-feature-graphic.mjs)",
       "Bash(node render-icon.mjs)",
       "Bash(python -c \":*)",
-      "Bash(netstat -ano)"
+      "Bash(netstat -ano)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//e/Project/1 Minute Brain Challenge/**)",
+      "Bash(done)"
     ]
   }
 }

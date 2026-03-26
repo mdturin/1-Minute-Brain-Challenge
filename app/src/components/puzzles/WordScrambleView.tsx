@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Puzzle } from '../../logic/puzzles';
-import PrimaryButton from '../PrimaryButton';
+import OptionButton from '../OptionButton';
 
 type Props = {
   puzzle: Puzzle;
@@ -25,11 +25,11 @@ export default function WordScrambleView({ puzzle, onAnswer }: Props) {
       ) : null}
       <View style={styles.optionsContainer}>
         {puzzle.options.map((option, index) => (
-          <PrimaryButton
+          <OptionButton
             key={option + index.toString()}
             label={option}
+            index={index}
             onPress={() => onAnswer(index === puzzle.correctIndex)}
-            style={styles.optionButton}
           />
         ))}
       </View>
@@ -74,8 +74,5 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     gap: 12,
-  },
-  optionButton: {
-    width: '100%',
   },
 });
