@@ -2,7 +2,7 @@
   "expo": {
     "name": "1 Minute Brain Challenge",
     "slug": "one-minute-brain-challenge",
-    "version": "1.0.0",
+    "version": "26.03.27.01",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.oneminutebrain.challenge",
-      "versionCode": 26032301,
+      "versionCode": 26032701,
       "adaptiveIcon": {
         "backgroundColor": "#050816",
         "foregroundImage": "./assets/android-icon-foreground.png",
