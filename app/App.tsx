@@ -16,6 +16,7 @@ import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import ConsentScreen from './src/screens/ConsentScreen';
+import UserInfoScreen from './src/screens/UserInfoScreen';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SubscriptionProvider } from './src/logic/useSubscription';
@@ -27,6 +28,7 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Login: undefined;
   Consent: undefined;
+  UserInfo: undefined;
   Home: undefined;
   Game: {
     difficulty: 'easy' | 'medium' | 'hard';
@@ -83,6 +85,7 @@ export default function App() {
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Consent" component={ConsentScreen} />
+          <Stack.Screen name="UserInfo" component={UserInfoScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Game" component={GameScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />

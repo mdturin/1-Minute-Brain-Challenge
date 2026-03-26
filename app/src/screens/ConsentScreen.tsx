@@ -20,7 +20,7 @@ export default function ConsentScreen({ navigation }: Props) {
 
   const handleContinue = async () => {
     await AsyncStorage.setItem('hasAcceptedPolicy', 'true');
-    navigation.replace('Home');
+    navigation.replace('UserInfo');
   };
 
   const handleDecline = async () => {
