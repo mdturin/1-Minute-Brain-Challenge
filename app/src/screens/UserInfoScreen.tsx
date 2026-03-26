@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
+import { loadUserProfile, saveUserProfile } from '../storage/userProfile';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserInfo'>;
 
@@ -53,6 +54,18 @@ export default function UserInfoScreen({ navigation }: Props) {
 
   const canContinue = age.trim().length > 0 && country.length > 0;
 
+  const handleNext = async () => {
+    try {
+      const profile = await loadUserProfile();
+      await saveUserProfile({
+        ...profile,
+        age: Number(age),
+        country,
+      });
+    } catch {}
+    navigation.replace('Home');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
@@ -91,7 +104,7 @@ export default function UserInfoScreen({ navigation }: Props) {
         {/* Next button */}
         <TouchableOpacity
           style={[styles.btn, !canContinue && styles.btnDisabled]}
-          onPress={() => navigation.replace('Home')}
+          onPress={handleNext}
           disabled={!canContinue}
           activeOpacity={0.85}
         >
