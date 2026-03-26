@@ -55,9 +55,12 @@ export function generateSymbolCountPuzzle(difficulty: Difficulty, rng?: () => nu
   const usedSymbols = [...ALL_SYMBOLS].sort(() => (rng ?? Math.random)() - 0.5).slice(0, symbolCount);
   const targetSymbol = randomChoice(usedSymbols, rng);
 
-  // Fill grid randomly using only usedSymbols
+  // Fill grid randomly using only usedSymbols, guaranteeing at least 1 target
   const totalCells = rows * cols;
   const grid: string[] = Array.from({ length: totalCells }, () => randomChoice(usedSymbols, rng));
+  if (!grid.includes(targetSymbol)) {
+    grid[randomInt(0, totalCells - 1, rng)] = targetSymbol;
+  }
 
   // Count target symbol occurrences
   const correctCount = grid.filter((s) => s === targetSymbol).length;
