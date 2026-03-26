@@ -2,12 +2,14 @@ import type { Puzzle } from './types';
 import type { Difficulty } from '../difficulty';
 
 const SYMBOL_CHARS: Record<string, string> = {
-  circle:   '◯',
+  circle:   '●',
   square:   '■',
   triangle: '▲',
   star:     '★',
   diamond:  '◆',
   heart:    '♥',
+  cross:    '✚',
+  arrow:    '➤',
 };
 
 const ALL_SYMBOLS = Object.keys(SYMBOL_CHARS);
@@ -55,9 +57,25 @@ export function generateSymbolCountPuzzle(difficulty: Difficulty, rng?: () => nu
   const usedSymbols = [...ALL_SYMBOLS].sort(() => (rng ?? Math.random)() - 0.5).slice(0, symbolCount);
   const targetSymbol = randomChoice(usedSymbols, rng);
 
-  // Fill grid randomly using only usedSymbols, guaranteeing at least 1 target
+  // Fill grid with balanced counts then shuffle to avoid clustering
   const totalCells = rows * cols;
-  const grid: string[] = Array.from({ length: totalCells }, () => randomChoice(usedSymbols, rng));
+  const baseCount = Math.floor(totalCells / usedSymbols.length);
+  const remainder = totalCells % usedSymbols.length;
+  const shuffledForRemainder = [...usedSymbols].sort(() => (rng ?? Math.random)() - 0.5);
+  const symbolCounts = new Map<string, number>(usedSymbols.map(s => [s, baseCount]));
+  for (let i = 0; i < remainder; i++) {
+    symbolCounts.set(shuffledForRemainder[i]!, symbolCounts.get(shuffledForRemainder[i]!)! + 1);
+  }
+  const flatGrid: string[] = [];
+  for (const [sym, cnt] of symbolCounts) {
+    for (let i = 0; i < cnt; i++) flatGrid.push(sym);
+  }
+  // Fisher-Yates shuffle
+  for (let i = flatGrid.length - 1; i > 0; i--) {
+    const j = Math.floor((rng ?? Math.random)() * (i + 1));
+    [flatGrid[i], flatGrid[j]] = [flatGrid[j]!, flatGrid[i]!];
+  }
+  const grid = flatGrid;
   if (!grid.includes(targetSymbol)) {
     grid[randomInt(0, totalCells - 1, rng)] = targetSymbol;
   }

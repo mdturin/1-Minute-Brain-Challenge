@@ -25,24 +25,12 @@ const SHAPES: Shape[] = [
     rotations: ['↗', '↘', '↙', '↖'],
   },
   {
-    name: 'L-shape',
-    rotations: ['⌐', '¬', '⌐', '¬'], // simplified L variants
-  },
-  {
-    name: 'corner',
-    rotations: ['⌐', '⌐', '⌐', '⌐'],
-  },
-  {
     name: 'triangle',
     rotations: ['▲', '▶', '▼', '◀'],
   },
   {
     name: 'half-circle',
     rotations: ['◑', '◒', '◐', '◓'],
-  },
-  {
-    name: 'flag',
-    rotations: ['⚑', '⚐', '⚑', '⚐'],
   },
 ];
 

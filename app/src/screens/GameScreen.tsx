@@ -7,7 +7,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import TimerBar from '../components/TimerBar';
 import Card from '../components/Card';
-import { generateRandomPuzzle, Puzzle } from '../logic/puzzles';
+import { generateRandomPuzzle, Puzzle, PuzzleType } from '../logic/puzzles';
 import { DIFFICULTIES, type Difficulty } from '../logic/difficulty';
 import { calculateScoreForAnswer } from '../logic/scoring';
 import MentalMathView from '../components/puzzles/MentalMathView';
@@ -109,7 +109,7 @@ export default function GameScreen({ navigation, route }: Props) {
 
   const [remainingTime, setRemainingTime] = useState<number>(difficultyConfig.durationSeconds);
   const [currentPuzzle, setCurrentPuzzle] = useState<Puzzle>(
-    () => generateRandomPuzzle(difficultyKey, undefined, rngRef.current),
+    () => generateRandomPuzzle(difficultyKey, [], rngRef.current),
   );
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -120,6 +120,7 @@ export default function GameScreen({ navigation, route }: Props) {
   const scoreRef = useRef(0);
   const maxStreakRef = useRef(0);
   const puzzlesSolvedRef = useRef(0);
+  const recentTypesRef = useRef<PuzzleType[]>([]);
   const [status, setStatus] = useState<'playing' | 'finished'>('playing');
   const [showSummary, setShowSummary] = useState(false);
   const [lastAnswer, setLastAnswer] = useState<'correct' | 'wrong' | null>(null);
@@ -145,7 +146,8 @@ export default function GameScreen({ navigation, route }: Props) {
     scoreRef.current = 0;
     maxStreakRef.current = 0;
     puzzlesSolvedRef.current = 0;
-    setCurrentPuzzle(generateRandomPuzzle(difficultyKey, undefined, rngRef.current));
+    recentTypesRef.current = [];
+    setCurrentPuzzle(generateRandomPuzzle(difficultyKey, [], rngRef.current));
   }, [difficultyKey]);
 
   useEffect(() => {
@@ -242,7 +244,11 @@ export default function GameScreen({ navigation, route }: Props) {
       showFeedback('wrong', 0);
     }
 
-    setCurrentPuzzle((prev) => generateRandomPuzzle(difficultyKey, prev.type, rngRef.current));
+    setCurrentPuzzle((prev) => {
+      const updatedRecent = [...recentTypesRef.current, prev.type].slice(-4);
+      recentTypesRef.current = updatedRecent;
+      return generateRandomPuzzle(difficultyKey, updatedRecent, rngRef.current);
+    });
   };
 
   const goBack = () => {
@@ -280,7 +286,8 @@ export default function GameScreen({ navigation, route }: Props) {
       setMaxStreak(0);
       setPuzzlesSolved(0);
       setStatus('playing');
-      setCurrentPuzzle(generateRandomPuzzle(difficultyKey));
+      recentTypesRef.current = [];
+      setCurrentPuzzle(generateRandomPuzzle(difficultyKey, [], rngRef.current));
       scoreRef.current = 0;
       maxStreakRef.current = 0;
       puzzlesSolvedRef.current = 0;

@@ -11,9 +11,11 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import type { RootStackParamList } from '../../App';
 import { signInAsGuest, signInWithGoogle } from '../logic/auth';
+import { loadUserProfile } from '../storage/userProfile';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -40,7 +42,17 @@ export default function LoginScreen({ navigation }: Props) {
       }
       setLoading(true);
       signInWithGoogle(idToken, accessToken)
-        .then(() => navigation.replace('Consent'))
+        .then(async () => {
+          try {
+            const profile = await loadUserProfile();
+            if (profile.consentAccepted) {
+              navigation.replace('Home');
+              return;
+            }
+          } catch {}
+          const accepted = await AsyncStorage.getItem('hasAcceptedPolicy');
+          navigation.replace(accepted === 'true' ? 'Home' : 'Consent');
+        })
         .catch(() => {
           setError('Google sign-in failed. Please try again.');
           setLoading(false);
@@ -62,7 +74,8 @@ export default function LoginScreen({ navigation }: Props) {
     setLoading(true);
     try {
       await signInAsGuest();
-      navigation.replace('Consent');
+      const accepted = await AsyncStorage.getItem('hasAcceptedPolicy');
+      navigation.replace(accepted === 'true' ? 'Home' : 'Consent');
     } catch {
       setError('Could not continue as guest. Please try again.');
       setLoading(false);

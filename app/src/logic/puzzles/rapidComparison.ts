@@ -16,11 +16,16 @@ type ComparisonItem = {
 
 function makeTriple(difficulty: Difficulty, rng?: () => number): [ComparisonItem, ComparisonItem, ComparisonItem] {
   if (difficulty === 'easy') {
-    const a = randomInt(1, 99, rng);
-    let b = randomInt(1, 99, rng);
-    while (Math.abs(a - b) < 5 || b === a) b = randomInt(1, 99, rng);
-    let c = randomInt(1, 99, rng);
-    while (Math.abs(a - c) < 5 || Math.abs(b - c) < 5 || c === a || c === b) c = randomInt(1, 99, rng);
+    // Use non-overlapping buckets for guaranteed wide spread
+    const useNegatives = (rng ?? Math.random)() < 0.3;
+    const buckets: Array<[number, number]> = useNegatives
+      ? [[-50, -10], [10, 40], [50, 99]]
+      : [[1, 25], [35, 65], [75, 99]];
+    // Shuffle bucket assignment so numbers aren't always in ascending order
+    const shuffledBuckets = shuffle(buckets, rng);
+    const a = randomInt(shuffledBuckets[0]![0], shuffledBuckets[0]![1], rng);
+    const b = randomInt(shuffledBuckets[1]![0], shuffledBuckets[1]![1], rng);
+    const c = randomInt(shuffledBuckets[2]![0], shuffledBuckets[2]![1], rng);
     return [
       { display: String(a), value: a },
       { display: String(b), value: b },

@@ -13,6 +13,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import { signIn, signUp, signOut, onAuthStateChanged, resetPassword, linkWithGoogle, signInWithGoogle, type AuthUser } from '../logic/auth';
 import { useSubscription } from '../logic/useSubscription';
 import { Ionicons } from '@expo/vector-icons';
+import { COUNTRIES } from '../constants/countries';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -82,6 +83,8 @@ export default function ProfileScreen({ navigation }: Props) {
   const [linkLoading, setLinkLoading] = useState(false);
   const [linkError, setLinkError] = useState('');
   const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
+  const [countryModalVisible, setCountryModalVisible] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
 
   const { energy, maxEnergy, isLoading: energyLoading } = useEnergy();
   const { isSubscribed, subscriptionTier, restore, isRestoring, deepLinkManage } = useSubscription();
@@ -163,6 +166,10 @@ export default function ProfileScreen({ navigation }: Props) {
     });
     return unsubscribe;
   }, []);
+
+  const filteredCountries = countrySearch.trim()
+    ? COUNTRIES.filter(c => c.toLowerCase().includes(countrySearch.toLowerCase()))
+    : COUNTRIES;
 
   const handleChange = (key: keyof UserProfile, value: string) => {
     setProfile((current) => {
@@ -513,13 +520,16 @@ export default function ProfileScreen({ navigation }: Props) {
             </View>
             <View style={[styles.inputWrapper, { flex: 1 }]}>
               <Ionicons name="globe-outline" size={18} color="#64748b" />
-              <TextInput
-                style={styles.input}
-                placeholder="Country"
-                placeholderTextColor="#475569"
-                value={profile.country ?? ''}
-                onChangeText={(text) => handleChange('country', text)}
-              />
+              <TouchableOpacity
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                onPress={() => setCountryModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.input, { flex: 1, color: profile.country ? '#f9fafb' : '#475569', paddingHorizontal: 0, paddingVertical: 0, backgroundColor: 'transparent', borderWidth: 0 }]}>
+                  {profile.country || 'Country'}
+                </Text>
+                <Ionicons name="chevron-down" size={15} color="#475569" />
+              </TouchableOpacity>
             </View>
           </View>
           {hasError && <Text style={styles.errorText}>Could not save changes.</Text>}
@@ -652,6 +662,55 @@ export default function ProfileScreen({ navigation }: Props) {
                 </TouchableOpacity>
               );
             }}
+          />
+        </View>
+      </Modal>
+
+      {/* Country picker modal */}
+      <Modal visible={countryModalVisible && profile != null} animationType="slide" presentationStyle="pageSheet">
+        <View style={styles.countryModal}>
+          <View style={styles.countryModalHeader}>
+            <Text style={styles.countryModalTitle}>Select Country</Text>
+            <TouchableOpacity onPress={() => { setCountryModalVisible(false); setCountrySearch(''); }}>
+              <Ionicons name="close" size={24} color="#94a3b8" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.countrySearchRow}>
+            <Ionicons name="search" size={16} color="#475569" />
+            <TextInput
+              style={styles.countrySearchInput}
+              placeholder="Search countries..."
+              placeholderTextColor="#475569"
+              value={countrySearch}
+              onChangeText={setCountrySearch}
+              autoFocus
+            />
+            {countrySearch.length > 0 && (
+              <TouchableOpacity onPress={() => setCountrySearch('')}>
+                <Ionicons name="close-circle" size={16} color="#475569" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <FlatList
+            data={filteredCountries}
+            keyExtractor={item => item}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.countryRow, item === profile?.country && styles.countryRowSelected]}
+                onPress={() => {
+                  handleChange('country', item);
+                  setCountryModalVisible(false);
+                  setCountrySearch('');
+                }}
+              >
+                <Text style={[styles.countryText, item === profile?.country && styles.countryTextSelected]}>
+                  {item}
+                </Text>
+                {item === profile?.country && <Ionicons name="checkmark" size={18} color="#6366f1" />}
+              </TouchableOpacity>
+            )}
+            ItemSeparatorComponent={() => <View style={styles.countrySeparator} />}
           />
         </View>
       </Modal>
@@ -1255,4 +1314,38 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
   },
+  countryModal: { flex: 1, backgroundColor: '#0f172a' },
+  countryModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+  },
+  countryModalTitle: { fontSize: 17, fontWeight: '700', color: '#f9fafb' },
+  countrySearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    margin: 16,
+    backgroundColor: '#1e293b',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  countrySearchInput: { flex: 1, color: '#f9fafb', fontSize: 15 },
+  countryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  countryRowSelected: { backgroundColor: 'rgba(99,102,241,0.08)' },
+  countryText: { fontSize: 15, color: '#cbd5e1' },
+  countryTextSelected: { color: '#6366f1', fontWeight: '600' },
+  countrySeparator: { height: 1, backgroundColor: '#1e293b', marginHorizontal: 20 },
 });

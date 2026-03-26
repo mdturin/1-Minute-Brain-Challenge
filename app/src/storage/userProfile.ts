@@ -11,6 +11,7 @@ export type UserProfile = {
   avatarId?: string;
   age?: number;
   country?: string;
+  consentAccepted?: boolean;
 };
 
 const defaultProfile: UserProfile = {

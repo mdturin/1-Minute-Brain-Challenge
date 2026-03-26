@@ -39,16 +39,16 @@ const RULES: Rule[] = [
 ];
 
 const WORD_SETS: string[][] = [
-  // 3-letter words
-  ['CAT', 'DOG', 'BAT', 'RAT', 'MAP', 'CUP', 'BEE', 'ICE', 'OAK', 'FIG'],
-  // 4-letter words
-  ['CAKE', 'BIRD', 'FROG', 'BOAT', 'DRUM', 'FISH', 'MOON', 'STAR', 'TREE', 'WOLF'],
-  // 5-letter words
-  ['APPLE', 'BREAD', 'CHESS', 'DREAM', 'EAGLE', 'FLAME', 'GRAPE', 'HOUSE', 'IMAGE', 'JUICE'],
-  // 6-letter words
-  ['BRIDGE', 'CASTLE', 'DESERT', 'FLOWER', 'GRAPES', 'HUNTER', 'ISLAND', 'JUNGLE', 'KNIGHT', 'LEMON'],
-  // Mixed
-  ['PIANO', 'CLOUD', 'RIVER', 'STONE', 'BEACH', 'TIGER', 'OCEAN', 'CROWN', 'TORCH', 'SWORD'],
+  // Mixed 3–4 letters
+  ['CAT', 'CAKE', 'DOG', 'FROG', 'BAT', 'BIRD', 'RAT', 'DRUM', 'MAP', 'FISH'],
+  // Mixed 4–5 letters
+  ['CAKE', 'APPLE', 'FROG', 'EAGLE', 'MOON', 'DREAM', 'STAR', 'GRAPE', 'WOLF', 'CHESS'],
+  // Mixed 5–6 letters
+  ['APPLE', 'BRIDGE', 'EAGLE', 'CASTLE', 'DREAM', 'DESERT', 'FLAME', 'FLOWER', 'OCEAN', 'HUNTER'],
+  // Mixed 3–5 letters (wide spread)
+  ['CAT', 'BIRD', 'APPLE', 'DOG', 'FROG', 'EAGLE', 'MAP', 'DRUM', 'DREAM', 'ICE'],
+  // Mixed 4–6 letters
+  ['CAKE', 'BRIDGE', 'FROG', 'CASTLE', 'MOON', 'DESERT', 'STAR', 'JUNGLE', 'WOLF', 'ISLAND'],
 ];
 
 export function generateHiddenRulePuzzle(difficulty: Difficulty, rng?: () => number): Puzzle {

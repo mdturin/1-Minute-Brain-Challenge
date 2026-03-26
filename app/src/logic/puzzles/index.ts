@@ -72,16 +72,17 @@ const puzzleTypes: PuzzleType[] = [
 
 export function generateRandomPuzzle(
   difficulty: Difficulty,
-  previousType?: PuzzleType,
+  recentTypes?: PuzzleType[],
   rng?: () => number,
 ): Puzzle {
+  const exclusions = recentTypes ?? [];
   const availableTypes =
-    previousType != null && puzzleTypes.length > 1
-      ? puzzleTypes.filter((t) => t !== previousType)
+    exclusions.length > 0 && puzzleTypes.length > exclusions.length
+      ? puzzleTypes.filter((t) => !exclusions.includes(t))
       : puzzleTypes;
 
   const randomIndex = Math.floor((rng ?? Math.random)() * availableTypes.length);
-  const type = availableTypes[randomIndex];
+  const type = availableTypes[randomIndex]!;
   const generator = puzzleGenerators[type];
   return generator(difficulty, rng);
 }

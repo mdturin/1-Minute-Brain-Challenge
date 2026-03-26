@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import type { RootStackParamList } from '../../App';
 import { signOut } from '../logic/auth';
+import { loadUserProfile, saveUserProfile } from '../storage/userProfile';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Consent'>;
 
@@ -20,6 +21,14 @@ export default function ConsentScreen({ navigation }: Props) {
 
   const handleContinue = async () => {
     await AsyncStorage.setItem('hasAcceptedPolicy', 'true');
+    try {
+      const profile = await loadUserProfile();
+      await saveUserProfile({ ...profile, consentAccepted: true });
+      if (profile.age && profile.country) {
+        navigation.replace('Home');
+        return;
+      }
+    } catch {}
     navigation.replace('UserInfo');
   };
 
