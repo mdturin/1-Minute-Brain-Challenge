@@ -17,16 +17,16 @@ import { Ionicons } from '@expo/vector-icons';
 WebBrowser.maybeCompleteAuthSession();
 
 const AVATARS = [
-  { id: 'bolt',     icon: 'flash'            as const, bg: '#4f46e5', color: '#c7d2fe' },
-  { id: 'fire',     icon: 'flame'            as const, bg: '#dc2626', color: '#fecaca' },
-  { id: 'star',     icon: 'star'             as const, bg: '#d97706', color: '#fde68a' },
-  { id: 'trophy',   icon: 'trophy'           as const, bg: '#0284c7', color: '#bae6fd' },
-  { id: 'rocket',   icon: 'rocket'           as const, bg: '#0f766e', color: '#99f6e4' },
-  { id: 'pulse',    icon: 'pulse'            as const, bg: '#7c3aed', color: '#ddd6fe' },
-  { id: 'eye',      icon: 'eye'              as const, bg: '#0e7490', color: '#a5f3fc' },
-  { id: 'compass',  icon: 'compass'          as const, bg: '#166534', color: '#bbf7d0' },
-  { id: 'game',     icon: 'game-controller'  as const, bg: '#9333ea', color: '#e9d5ff' },
-  { id: 'infinite', icon: 'infinite'         as const, bg: '#374151', color: '#d1d5db' },
+  { id: 'oni',      emoji: '👹', bg: '#7f1d1d' },
+  { id: 'goblin',   emoji: '👺', bg: '#14532d' },
+  { id: 'skull',    emoji: '💀', bg: '#1c1917' },
+  { id: 'robot',    emoji: '🤖', bg: '#1e3a5f' },
+  { id: 'monster',  emoji: '👾', bg: '#3b0764' },
+  { id: 'dragon',   emoji: '🐲', bg: '#064e3b' },
+  { id: 'zombie',   emoji: '🧟', bg: '#1a2e05' },
+  { id: 'wolf',     emoji: '🐺', bg: '#1e293b' },
+  { id: 'scorpion', emoji: '🦂', bg: '#431407' },
+  { id: 'bat',      emoji: '🦇', bg: '#2e1065' },
 ];
 
 function getAvatar(avatarId: string | undefined, uid: string) {
@@ -470,7 +470,7 @@ export default function ProfileScreen({ navigation }: Props) {
         <View style={styles.profileCard}>
           <TouchableOpacity style={styles.avatarWrapper} onPress={() => setAvatarPickerVisible(true)} activeOpacity={0.8}>
             <View style={[styles.avatarCircle, { backgroundColor: getAvatar(profile.avatarId, user.uid).bg }]}>
-              <Ionicons name={getAvatar(profile.avatarId, user.uid).icon} size={34} color={getAvatar(profile.avatarId, user.uid).color} />
+              <Text style={styles.avatarEmoji}>{getAvatar(profile.avatarId, user.uid).emoji}</Text>
             </View>
             <View style={styles.avatarEditBadge}>
               <Ionicons name="camera" size={12} color="#fff" />
@@ -640,7 +640,7 @@ export default function ProfileScreen({ navigation }: Props) {
                   activeOpacity={0.8}
                 >
                   <View style={[styles.avatarOptionCircle, { backgroundColor: item.bg }]}>
-                    <Ionicons name={item.icon} size={40} color={item.color} />
+                    <Text style={styles.avatarOptionEmoji}>{item.emoji}</Text>
                   </View>
                   {selected && (
                     <View style={styles.avatarCheckBadge}>
@@ -1180,6 +1180,12 @@ const styles = StyleSheet.create({
   avatarWrapper: {
     position: 'relative',
     marginBottom: 12,
+  },
+  avatarEmoji: {
+    fontSize: 34,
+  },
+  avatarOptionEmoji: {
+    fontSize: 44,
   },
   avatarEditBadge: {
     position: 'absolute',
