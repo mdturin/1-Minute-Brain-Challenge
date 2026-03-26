@@ -51,7 +51,9 @@
       },
       "eas": {
         "projectId": "d6f0256f-1104-4772-9ccb-7154be0d8c48"
-      }
+      },
+      "googleWebClientId": "1097445883559-q67pj6r6mtskec8g7g4gqks0jatseum1.apps.googleusercontent.com",
+      "googleAndroidClientId": "1097445883559-dqau26vrtiukejddo3pgfu1t6h6t5c8m.apps.googleusercontent.com"
     }
   }
 }

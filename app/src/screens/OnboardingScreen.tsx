@@ -42,13 +42,13 @@ export default function OnboardingScreen({ navigation }: Props) {
       setPage(page + 1);
     } else {
       await completeOnboarding();
-      navigation.replace('Home');
+      navigation.replace('Login');
     }
   };
 
   const handleSkip = async () => {
     await completeOnboarding();
-    navigation.replace('Home');
+    navigation.replace('Login');
   };
 
   return (

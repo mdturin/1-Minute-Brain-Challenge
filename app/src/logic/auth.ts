@@ -4,6 +4,10 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged as onFirebaseAuthStateChanged,
   sendPasswordResetEmail,
+  signInAnonymously as firebaseSignInAnonymously,
+  GoogleAuthProvider,
+  signInWithCredential,
+  updateProfile,
 } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 import { migrateLocalDataToCloud } from "./migrate";
@@ -91,6 +95,43 @@ export const getCurrentUser = (): AuthUser | null => {
 export const resetPassword = async (email: string): Promise<void> => {
   if (!auth) throw new Error("Firebase is not configured");
   await sendPasswordResetEmail(auth, email);
+};
+
+export const signInAsGuest = async (): Promise<AuthUser> => {
+  if (!auth) throw new Error("Firebase is not configured");
+  const result = await firebaseSignInAnonymously(auth);
+  try {
+    await migrateLocalDataToCloud();
+  } catch {}
+  return { uid: result.user.uid, email: null, displayName: 'Guest' };
+};
+
+export const signInWithGoogle = async (idToken: string | null, accessToken: string | null = null): Promise<AuthUser> => {
+  if (!auth) throw new Error("Firebase is not configured");
+  const credential = GoogleAuthProvider.credential(idToken, accessToken);
+  const result = await signInWithCredential(auth, credential);
+  // If signed in via access token only, Firebase won't populate displayName/photoURL.
+  // Fetch from Google userinfo endpoint and update the profile.
+  if (accessToken && !result.user.displayName) {
+    try {
+      const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const info = await resp.json();
+      await updateProfile(result.user, {
+        displayName: info.name ?? info.email ?? null,
+        photoURL: info.picture ?? null,
+      });
+    } catch {}
+  }
+  try {
+    await migrateLocalDataToCloud();
+  } catch {}
+  return {
+    uid: result.user.uid,
+    email: result.user.email,
+    displayName: result.user.displayName,
+  };
 };
 
 export const onAuthStateChanged = (

@@ -14,14 +14,19 @@ import AboutScreen from './src/screens/AboutScreen';
 import DailyChallengeScreen from './src/screens/DailyChallengeScreen';
 import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import ConsentScreen from './src/screens/ConsentScreen';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SubscriptionProvider } from './src/logic/useSubscription';
 import './src/logic/firebaseConfig'; // Initialize Firebase
 import { initializeAds } from './src/logic/adsInit';
+import { getCurrentUser } from './src/logic/auth';
 
 export type RootStackParamList = {
   Onboarding: undefined;
+  Login: undefined;
+  Consent: undefined;
   Home: undefined;
   Game: {
     difficulty: 'easy' | 'medium' | 'hard';
@@ -40,16 +45,24 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Home' | null>(null);
+  const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Login' | 'Consent' | 'Home' | null>(null);
 
   useEffect(() => {
     initializeAds().catch(() => {
       // Non-fatal — app continues if AdMob init fails at cold start
     });
 
-    AsyncStorage.getItem('hasSeenOnboarding').then(val => {
-      setInitialRoute(val === 'true' ? 'Home' : 'Onboarding');
-    });
+    (async () => {
+      const seen = await AsyncStorage.getItem('hasSeenOnboarding');
+      if (seen !== 'true') {
+        setInitialRoute('Onboarding');
+        return;
+      }
+      const user = getCurrentUser();
+      if (!user) { setInitialRoute('Login'); return; }
+      const accepted = await AsyncStorage.getItem('hasAcceptedPolicy');
+      setInitialRoute(accepted === 'true' ? 'Home' : 'Consent');
+    })();
   }, []);
 
   if (!initialRoute) return null;
@@ -68,6 +81,8 @@ export default function App() {
           }}
         >
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Consent" component={ConsentScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Game" component={GameScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />

@@ -26,7 +26,11 @@ export async function loadUserProfile(): Promise<UserProfile> {
       if (docSnap.exists()) {
         return docSnap.data() as UserProfile;
       } else {
-        return defaultProfile;
+        // New user — seed displayName from Firebase auth (e.g. Google display name)
+        return {
+          ...defaultProfile,
+          displayName: user.displayName || defaultProfile.displayName,
+        };
       }
     } catch (error) {
       console.error("Error loading profile from Firestore:", error);
