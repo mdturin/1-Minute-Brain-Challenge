@@ -7,6 +7,20 @@ import { generatePatternVisualPuzzle } from './patternVisual';
 import { generateWordScramblePuzzle } from './wordScramble';
 import { generateOddOneOutPuzzle } from './oddOneOut';
 import { generateSymbolCountPuzzle } from './symbolCount';
+import { generateDualTaskPuzzle } from './dualTask';
+import { generateInstructionFlipPuzzle } from './instructionFlip';
+import { generateTimeDelayedPuzzle } from './timeDelayed';
+import { generateReverseLogicPuzzle } from './reverseLogic';
+import { generateMultiStepPuzzle } from './multiStep';
+import { generateFakePatternPuzzle } from './fakePattern';
+import { generateVisualRotationPuzzle } from './visualRotation';
+import { generateHiddenRulePuzzle } from './hiddenRule';
+import { generateRapidComparisonPuzzle } from './rapidComparison';
+import { generateGoNoGoPuzzle } from './goNoGo';
+import { generateStroopEffectPuzzle } from './stroopEffect';
+import { generateCountDistractionPuzzle } from './countDistraction';
+import { generateSpotMisspellingPuzzle } from './spotMisspelling';
+import { generateCategoryClashPuzzle } from './categoryClash';
 
 const puzzleGenerators: Record<PuzzleType, (difficulty: Difficulty, rng?: () => number) => Puzzle> = {
   mental_math: generateMentalMathPuzzle,
@@ -16,6 +30,20 @@ const puzzleGenerators: Record<PuzzleType, (difficulty: Difficulty, rng?: () => 
   word_scramble: generateWordScramblePuzzle,
   odd_one_out: generateOddOneOutPuzzle,
   symbol_count: generateSymbolCountPuzzle,
+  dual_task: generateDualTaskPuzzle,
+  instruction_flip: generateInstructionFlipPuzzle,
+  time_delayed: generateTimeDelayedPuzzle,
+  reverse_logic: generateReverseLogicPuzzle,
+  multi_step: generateMultiStepPuzzle,
+  fake_pattern: generateFakePatternPuzzle,
+  visual_rotation: generateVisualRotationPuzzle,
+  hidden_rule: generateHiddenRulePuzzle,
+  rapid_comparison: generateRapidComparisonPuzzle,
+  go_no_go: generateGoNoGoPuzzle,
+  stroop_effect: generateStroopEffectPuzzle,
+  count_distraction: generateCountDistractionPuzzle,
+  spot_misspelling: generateSpotMisspellingPuzzle,
+  category_clash: generateCategoryClashPuzzle,
 };
 
 const puzzleTypes: PuzzleType[] = [
@@ -26,6 +54,20 @@ const puzzleTypes: PuzzleType[] = [
   'word_scramble',
   'odd_one_out',
   'symbol_count',
+  'dual_task',
+  'instruction_flip',
+  'time_delayed',
+  'reverse_logic',
+  'multi_step',
+  'fake_pattern',
+  'visual_rotation',
+  'hidden_rule',
+  'rapid_comparison',
+  'go_no_go',
+  'stroop_effect',
+  'count_distraction',
+  'spot_misspelling',
+  'category_clash',
 ];
 
 export function generateRandomPuzzle(

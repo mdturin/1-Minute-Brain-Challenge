@@ -17,6 +17,20 @@ import PatternVisualView from '../components/puzzles/PatternVisualView';
 import WordScrambleView from '../components/puzzles/WordScrambleView';
 import OddOneOutView from '../components/puzzles/OddOneOutView';
 import SymbolCountView from '../components/puzzles/SymbolCountView';
+import DualTaskView from '../components/puzzles/DualTaskView';
+import InstructionFlipView from '../components/puzzles/InstructionFlipView';
+import TimeDelayedView from '../components/puzzles/TimeDelayedView';
+import ReverseLogicView from '../components/puzzles/ReverseLogicView';
+import MultiStepView from '../components/puzzles/MultiStepView';
+import FakePatternView from '../components/puzzles/FakePatternView';
+import VisualRotationView from '../components/puzzles/VisualRotationView';
+import HiddenRuleView from '../components/puzzles/HiddenRuleView';
+import RapidComparisonView from '../components/puzzles/RapidComparisonView';
+import GoNoGoView from '../components/puzzles/GoNoGoView';
+import StroopEffectView from '../components/puzzles/StroopEffectView';
+import CountDistractionView from '../components/puzzles/CountDistractionView';
+import SpotMisspellingView from '../components/puzzles/SpotMisspellingView';
+import CategoryClashView from '../components/puzzles/CategoryClashView';
 import { updateStats } from '../storage/stats';
 import { markTodayCompleted } from '../storage/dailyChallenge';
 import { canShowInterstitialNow, showInterstitialWithCallbacks } from '../logic/ads';
@@ -40,6 +54,20 @@ const PUZZLE_ICONS: Record<string, string> = {
   word_scramble: 'text-outline',
   odd_one_out: 'remove-circle-outline',
   symbol_count: 'eye-outline',
+  dual_task: 'layers-outline',
+  instruction_flip: 'swap-horizontal-outline',
+  time_delayed: 'timer-outline',
+  reverse_logic: 'close-circle-outline',
+  multi_step: 'git-merge-outline',
+  fake_pattern: 'trending-up-outline',
+  visual_rotation: 'sync-outline',
+  hidden_rule: 'key-outline',
+  rapid_comparison: 'scale-outline',
+  go_no_go: 'flash-outline',
+  stroop_effect: 'color-palette-outline',
+  count_distraction: 'star-outline',
+  spot_misspelling: 'search-outline',
+  category_clash: 'layers-outline',
 };
 
 const PUZZLE_LABELS: Record<string, string> = {
@@ -50,6 +78,20 @@ const PUZZLE_LABELS: Record<string, string> = {
   word_scramble: 'Word Scramble',
   odd_one_out: 'Odd One Out',
   symbol_count: 'Symbol Count',
+  dual_task: 'Dual Task',
+  instruction_flip: 'Instruction Flip',
+  time_delayed: 'Time Delayed',
+  reverse_logic: 'Reverse Logic',
+  multi_step: 'Multi-Step',
+  fake_pattern: 'Fake Pattern',
+  visual_rotation: 'Visual Rotation',
+  hidden_rule: 'Hidden Rule',
+  rapid_comparison: 'Rapid Comparison',
+  go_no_go: 'Go / No-Go',
+  stroop_effect: 'Color Conflict',
+  count_distraction: 'Count & Filter',
+  spot_misspelling: 'Spot the Mistake',
+  category_clash: 'Category Clash',
 };
 
 export default function GameScreen({ navigation, route }: Props) {
@@ -220,6 +262,34 @@ export default function GameScreen({ navigation, route }: Props) {
         return <OddOneOutView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       case 'symbol_count':
         return <SymbolCountView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'dual_task':
+        return <DualTaskView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'instruction_flip':
+        return <InstructionFlipView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'time_delayed':
+        return <TimeDelayedView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'reverse_logic':
+        return <ReverseLogicView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'multi_step':
+        return <MultiStepView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'fake_pattern':
+        return <FakePatternView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'visual_rotation':
+        return <VisualRotationView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'hidden_rule':
+        return <HiddenRuleView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'rapid_comparison':
+        return <RapidComparisonView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'go_no_go':
+        return <GoNoGoView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'stroop_effect':
+        return <StroopEffectView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'count_distraction':
+        return <CountDistractionView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'spot_misspelling':
+        return <SpotMisspellingView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
+      case 'category_clash':
+        return <CategoryClashView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       default:
         return null;
     }
