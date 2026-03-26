@@ -581,10 +581,11 @@ export default function ProfileScreen({ navigation }: Props) {
           ) : null}
         </View>
 
-        {/* Subscription */}
+        {/* Subscription — only shown when active */}
+        {isSubscribed ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Subscription</Text>
-          {isSubscribed ? (
+          {(
             <View style={styles.subscriptionCard}>
               <View style={styles.subscriptionRow}>
                 <View style={styles.subscriptionInfo}>
@@ -607,8 +608,9 @@ export default function ProfileScreen({ navigation }: Props) {
                 </TouchableOpacity>
               ) : null}
             </View>
-          ) : null /* SHOW_UPGRADE: restore upgrade card when IAP is ready */}
+          )}
         </View>
+        ) : null}
       </ScrollView>
 
       {/* Avatar Picker Modal */}
