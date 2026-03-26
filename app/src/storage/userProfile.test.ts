@@ -78,7 +78,9 @@ describe("userProfile storage", () => {
       const mockProfile: UserProfile = {
         displayName: "Test User",
         avatarType: "initials",
+        avatarId: "dragon",
         age: 25,
+        country: "Japan",
       };
       mockGetDoc.mockResolvedValue({
         exists: () => true,
@@ -96,6 +98,19 @@ describe("userProfile storage", () => {
       );
       expect(mockGetDoc).toHaveBeenCalledWith(mockDocRef);
       expect(result).toEqual(mockProfile);
+    });
+
+    test("loads profile with avatarId from Firestore", async () => {
+      const mockUser = { uid: "abc", email: "a@b.com" };
+      mockGetCurrentUser.mockReturnValue(mockUser);
+      mockDoc.mockReturnValue({});
+      mockGetDoc.mockResolvedValue({
+        exists: () => true,
+        data: () => ({ displayName: "Warrior", avatarType: "initials", avatarId: "skull" }),
+      });
+
+      const result = await loadUserProfile();
+      expect(result.avatarId).toBe("skull");
     });
 
     test("returns default profile when Firestore doc does not exist", async () => {
@@ -182,7 +197,9 @@ describe("userProfile storage", () => {
       const profile: UserProfile = {
         displayName: "Test User",
         avatarType: "initials",
+        avatarId: "oni",
         age: 25,
+        country: "Japan",
       };
 
       await saveUserProfile(profile);

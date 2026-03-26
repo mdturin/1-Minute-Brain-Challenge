@@ -91,6 +91,21 @@ jest.mock('../logic/auth', () => ({
   resetPassword: jest.fn(),
   onAuthStateChanged: jest.fn(),
   getCurrentUser: jest.fn(),
+  linkWithGoogle: jest.fn(),
+  signInWithGoogle: jest.fn(),
+}));
+
+// Mock expo-auth-session Google provider
+jest.mock('expo-auth-session/providers/google', () => ({
+  useAuthRequest: jest.fn(() => [null, null, jest.fn()]),
+}));
+
+jest.mock('expo-web-browser', () => ({
+  maybeCompleteAuthSession: jest.fn(),
+}));
+
+jest.mock('expo-constants', () => ({
+  default: { expoConfig: { extra: { googleWebClientId: 'web-id', googleAndroidClientId: 'android-id' } } },
 }));
 
 // Mock userProfile
@@ -268,15 +283,54 @@ describe('ProfileScreen', () => {
     });
   });
 
+  describe('Anonymous / Guest user', () => {
+    beforeEach(() => {
+      mockOnAuthStateChanged.mockImplementation((callback) => {
+        callback({ uid: 'anon-1', email: null, displayName: null, isAnonymous: true });
+        return jest.fn();
+      });
+      mockLoadUserProfile.mockResolvedValue({
+        displayName: 'Guest',
+        avatarType: 'initials',
+      });
+      mockLoadStats.mockResolvedValue({
+        bestScore: 0, gamesPlayed: 0, totalScore: 0, bestStreak: 0,
+      });
+    });
+
+    test('shows guest upgrade banner for anonymous users', async () => {
+      const { getByText } = render(
+        <ProfileScreen navigation={mockNavigation} route={{} as any} />,
+      );
+
+      await waitFor(() => {
+        expect(getByText("You're browsing as a Guest")).toBeTruthy();
+        expect(getByText('Sign in to save your progress')).toBeTruthy();
+      });
+    });
+
+    test('renders avatar emoji for anonymous user', async () => {
+      const { getByText } = render(
+        <ProfileScreen navigation={mockNavigation} route={{} as any} />,
+      );
+
+      await waitFor(() => {
+        // uid 'anon-1' → 'a'.charCodeAt(0) = 97 → 97 % 10 = 7 → wolf 🐺
+        expect(getByText('🐺')).toBeTruthy();
+      });
+    });
+  });
+
   describe('Profile Editing (authenticated)', () => {
     beforeEach(() => {
       mockOnAuthStateChanged.mockImplementation((callback) => {
-        callback({ uid: '123', email: 'test@example.com', displayName: 'Test User' });
+        callback({ uid: '123', email: 'test@example.com', displayName: 'Test User', isAnonymous: false });
         return jest.fn();
       });
       mockLoadUserProfile.mockResolvedValue({
         displayName: 'Test User',
         avatarType: 'initials',
+        avatarId: 'dragon',
         age: 25,
         country: 'USA',
       });
@@ -296,6 +350,33 @@ describe('ProfileScreen', () => {
       await waitFor(() => {
         expect(getByText('Profile')).toBeTruthy();
         expect(getByText('Test User')).toBeTruthy();
+      });
+    });
+
+    test('renders saved avatar emoji', async () => {
+      const { getByText } = render(
+        <ProfileScreen navigation={mockNavigation} route={{} as any} />,
+      );
+
+      await waitFor(() => {
+        // avatarId 'dragon' → 🐲
+        expect(getByText('🐲')).toBeTruthy();
+      });
+    });
+
+    test('renders default deterministic avatar when no avatarId saved', async () => {
+      mockLoadUserProfile.mockResolvedValue({
+        displayName: 'Test User',
+        avatarType: 'initials',
+        // no avatarId — fallback: uid '123' → '1'.charCodeAt(0) = 49 → 49 % 10 = 9 → bat 🦇
+      });
+
+      const { getByText } = render(
+        <ProfileScreen navigation={mockNavigation} route={{} as any} />,
+      );
+
+      await waitFor(() => {
+        expect(getByText('🦇')).toBeTruthy();
       });
     });
 
@@ -363,6 +444,7 @@ describe('ProfileScreen', () => {
         expect(mockSaveUserProfile).toHaveBeenCalledWith({
           displayName: 'Test User',
           avatarType: 'initials',
+          avatarId: 'dragon',
           age: 25,
           country: 'USA',
         });
