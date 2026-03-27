@@ -3,6 +3,7 @@
     "name": "1 Minute Brain Challenge",
     "slug": "one-minute-brain-challenge",
     "version": "26.03.27.01",
+    "scheme": "com.oneminutebrain.challenge",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -31,6 +32,7 @@
     },
     "plugins": [
       "expo-iap",
+      "@react-native-google-signin/google-signin",
       [
         "react-native-google-mobile-ads",
         {

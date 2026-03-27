@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ActivityIndicator, Alert, FlatList, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
+import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
 import Constants from 'expo-constants';
 import type { RootStackParamList } from '../../App';
 import { loadUserProfile, saveUserProfile, type UserProfile } from '../storage/userProfile';
@@ -15,7 +14,6 @@ import { useSubscription } from '../logic/useSubscription';
 import { Ionicons } from '@expo/vector-icons';
 import { COUNTRIES } from '../constants/countries';
 
-WebBrowser.maybeCompleteAuthSession();
 
 const AVATARS = [
   { id: 'oni',      emoji: '👹', bg: '#7f1d1d' },
@@ -91,58 +89,43 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const [googleSignInLoading, setGoogleSignInLoading] = useState(false);
 
-  // Hook used for linking guest → Google (logged-in guest state)
-  const [, googleLinkResponse, googleLinkPromptAsync] = Google.useAuthRequest({
-    webClientId: Constants.expoConfig?.extra?.googleWebClientId,
-    androidClientId: Constants.expoConfig?.extra?.googleAndroidClientId,
-  });
-
-  // Hook used for signing in with Google from the auth (logged-out) form
-  const [, googleSignInResponse, googleSignInPromptAsync] = Google.useAuthRequest({
-    webClientId: Constants.expoConfig?.extra?.googleWebClientId,
-    androidClientId: Constants.expoConfig?.extra?.googleAndroidClientId,
-  });
-
   useEffect(() => {
-    if (googleLinkResponse?.type === 'success') {
-      const params = googleLinkResponse.params as Record<string, string>;
-      const idToken = googleLinkResponse.authentication?.idToken ?? params?.id_token ?? null;
-      const accessToken = googleLinkResponse.authentication?.accessToken ?? params?.access_token ?? null;
-      setLinkLoading(true);
-      linkWithGoogle(idToken, accessToken)
-        .then(() => { setLinkError(''); setLinkLoading(false); })
-        .catch(() => { setLinkError('Could not link Google account. Try again.'); setLinkLoading(false); });
-    } else if (googleLinkResponse?.type === 'error') {
-      setLinkError('Google sign-in was cancelled.');
-      setLinkLoading(false);
-    }
-  }, [googleLinkResponse]);
+    GoogleSignin.configure({
+      webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+    });
+  }, []);
 
-  useEffect(() => {
-    if (googleSignInResponse?.type === 'success') {
-      const params = googleSignInResponse.params as Record<string, string>;
-      const idToken = googleSignInResponse.authentication?.idToken ?? params?.id_token ?? null;
-      const accessToken = googleSignInResponse.authentication?.accessToken ?? params?.access_token ?? null;
-      setGoogleSignInLoading(true);
-      signInWithGoogle(idToken, accessToken)
-        .then(() => setGoogleSignInLoading(false))
-        .catch(() => { setAuthError('Google sign-in failed. Please try again.'); setGoogleSignInLoading(false); });
-    } else if (googleSignInResponse?.type === 'error') {
-      setAuthError('Google sign-in was cancelled.');
-      setGoogleSignInLoading(false);
-    }
-  }, [googleSignInResponse]);
-
-  const handleLinkGoogle = () => {
+  const handleLinkGoogle = async () => {
     setLinkError('');
     setLinkLoading(true);
-    googleLinkPromptAsync().catch(() => setLinkLoading(false));
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (!isSuccessResponse(response)) { setLinkLoading(false); return; }
+      const { idToken } = response.data;
+      await linkWithGoogle(idToken, null);
+      setLinkError('');
+    } catch {
+      setLinkError('Could not link Google account. Try again.');
+    } finally {
+      setLinkLoading(false);
+    }
   };
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setAuthError('');
     setGoogleSignInLoading(true);
-    googleSignInPromptAsync().catch(() => setGoogleSignInLoading(false));
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (!isSuccessResponse(response)) { setGoogleSignInLoading(false); return; }
+      const { idToken } = response.data;
+      await signInWithGoogle(idToken, null);
+    } catch {
+      setAuthError('Google sign-in failed. Please try again.');
+    } finally {
+      setGoogleSignInLoading(false);
+    }
   };
 
   useEffect(() => {

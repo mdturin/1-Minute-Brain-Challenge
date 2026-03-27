@@ -8,8 +8,7 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
+import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,56 +16,43 @@ import type { RootStackParamList } from '../../App';
 import { signInAsGuest, signInWithGoogle } from '../logic/auth';
 import { loadUserProfile } from '../storage/userProfile';
 
-WebBrowser.maybeCompleteAuthSession();
-
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: Constants.expoConfig?.extra?.googleWebClientId,
-    androidClientId: Constants.expoConfig?.extra?.googleAndroidClientId,
-  });
-
   useEffect(() => {
-    if (response?.type === 'success') {
-      const params = response.params as Record<string, string>;
-      const idToken = response.authentication?.idToken ?? params?.id_token ?? null;
-      const accessToken = response.authentication?.accessToken ?? params?.access_token ?? null;
-      if (!idToken && !accessToken) {
-        setError('Google sign-in failed. Please try again.');
+    GoogleSignin.configure({
+      webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+    });
+  }, []);
+
+  const handleGoogle = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (!isSuccessResponse(response)) {
         setLoading(false);
         return;
       }
-      setLoading(true);
-      signInWithGoogle(idToken, accessToken)
-        .then(async () => {
-          try {
-            const profile = await loadUserProfile();
-            if (profile.consentAccepted) {
-              navigation.replace('Home');
-              return;
-            }
-          } catch {}
-          const accepted = await AsyncStorage.getItem('hasAcceptedPolicy');
-          navigation.replace(accepted === 'true' ? 'Home' : 'Consent');
-        })
-        .catch(() => {
-          setError('Google sign-in failed. Please try again.');
-          setLoading(false);
-        });
-    } else if (response?.type === 'error') {
-      setError('Google sign-in was cancelled or failed.');
+      const { idToken } = response.data;
+      await signInWithGoogle(idToken, null);
+      try {
+        const profile = await loadUserProfile();
+        if (profile.consentAccepted) {
+          navigation.replace('Home');
+          return;
+        }
+      } catch {}
+      const accepted = await AsyncStorage.getItem('hasAcceptedPolicy');
+      navigation.replace(accepted === 'true' ? 'Home' : 'Consent');
+    } catch {
+      setError('Google sign-in failed. Please try again.');
       setLoading(false);
     }
-  }, [response]);
-
-  const handleGoogle = () => {
-    setError(null);
-    setLoading(true);
-    promptAsync().catch(() => setLoading(false));
   };
 
   const handleGuest = async () => {
@@ -102,9 +88,9 @@ export default function LoginScreen({ navigation }: Props) {
         {/* Buttons */}
         <View style={styles.buttonsArea}>
           <TouchableOpacity
-            style={[styles.googleButton, (loading || !request) && styles.buttonDisabled]}
+            style={[styles.googleButton, loading && styles.buttonDisabled]}
             onPress={handleGoogle}
-            disabled={loading || !request}
+            disabled={loading}
             activeOpacity={0.85}
           >
             <Text style={styles.googleLogo}>G</Text>

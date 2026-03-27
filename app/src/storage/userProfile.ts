@@ -23,7 +23,7 @@ export async function loadUserProfile(): Promise<UserProfile> {
   const user = getCurrentUser();
   if (user) {
     try {
-      const docRef = doc(db, "users", user.uid, "profile", "data");
+      const docRef = doc(db!, "users", user.uid, "profile", "data");
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         return docSnap.data() as UserProfile;
@@ -62,7 +62,7 @@ export async function saveUserProfile(profile: UserProfile): Promise<void> {
   const user = getCurrentUser();
   if (user) {
     try {
-      const docRef = doc(db, "users", user.uid, "profile", "data");
+      const docRef = doc(db!, "users", user.uid, "profile", "data");
       await setDoc(docRef, profile);
       return;
     } catch (error) {

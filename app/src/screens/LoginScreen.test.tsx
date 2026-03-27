@@ -24,14 +24,22 @@ jest.mock('@expo/vector-icons', () => {
 
 jest.mock('firebase/analytics', () => ({ getAnalytics: jest.fn(() => ({})) }));
 jest.mock('firebase/app', () => ({ initializeApp: jest.fn(() => ({})) }));
+jest.mock('firebase/firestore', () => ({ getFirestore: jest.fn(() => ({})), doc: jest.fn(), getDoc: jest.fn(), setDoc: jest.fn() }));
+jest.mock('firebase/auth', () => ({ getAuth: jest.fn(() => ({})) }));
 
-// Mock expo-auth-session Google provider
-jest.mock('expo-auth-session/providers/google', () => ({
-  useAuthRequest: jest.fn(() => [null, null, jest.fn().mockResolvedValue(undefined)]),
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn().mockResolvedValue(null),
+  setItem: jest.fn().mockResolvedValue(null),
+  removeItem: jest.fn().mockResolvedValue(null),
 }));
 
-jest.mock('expo-web-browser', () => ({
-  maybeCompleteAuthSession: jest.fn(),
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn().mockResolvedValue(true),
+    signIn: jest.fn().mockResolvedValue({ data: { idToken: 'mock-id-token' } }),
+  },
+  isSuccessResponse: jest.fn((r: any) => !!r?.data?.idToken),
 }));
 
 jest.mock('expo-constants', () => ({
@@ -118,10 +126,8 @@ describe('LoginScreen', () => {
     });
   });
 
-  test('Google button calls promptAsync when pressed', async () => {
-    const mockPromptAsync = jest.fn().mockResolvedValue(undefined);
-    const { useAuthRequest } = require('expo-auth-session/providers/google');
-    useAuthRequest.mockImplementation(() => [{ url: 'https://accounts.google.com' }, null, mockPromptAsync]);
+  test('Google button calls GoogleSignin.signIn when pressed', async () => {
+    const { GoogleSignin } = require('@react-native-google-signin/google-signin');
 
     const { getByText } = render(
       <LoginScreen navigation={mockNavigation} route={{} as any} />,
@@ -131,7 +137,7 @@ describe('LoginScreen', () => {
     fireEvent.press(getByText('Continue with Google'));
 
     await waitFor(() => {
-      expect(mockPromptAsync).toHaveBeenCalled();
+      expect(GoogleSignin.signIn).toHaveBeenCalled();
     });
   });
 });

@@ -95,13 +95,13 @@ jest.mock('../logic/auth', () => ({
   signInWithGoogle: jest.fn(),
 }));
 
-// Mock expo-auth-session Google provider
-jest.mock('expo-auth-session/providers/google', () => ({
-  useAuthRequest: jest.fn(() => [null, null, jest.fn()]),
-}));
-
-jest.mock('expo-web-browser', () => ({
-  maybeCompleteAuthSession: jest.fn(),
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn().mockResolvedValue(true),
+    signIn: jest.fn().mockResolvedValue({ data: { idToken: 'mock-id-token' } }),
+  },
+  isSuccessResponse: jest.fn((r: any) => !!r?.data?.idToken),
 }));
 
 jest.mock('expo-constants', () => ({

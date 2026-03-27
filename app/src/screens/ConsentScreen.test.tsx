@@ -24,6 +24,8 @@ jest.mock('@expo/vector-icons', () => {
 
 jest.mock('firebase/analytics', () => ({ getAnalytics: jest.fn(() => ({})) }));
 jest.mock('firebase/app', () => ({ initializeApp: jest.fn(() => ({})) }));
+jest.mock('firebase/firestore', () => ({ getFirestore: jest.fn(() => ({})), doc: jest.fn(), getDoc: jest.fn(), setDoc: jest.fn() }));
+jest.mock('firebase/auth', () => ({ getAuth: jest.fn(() => ({})) }));
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   __esModule: true,
