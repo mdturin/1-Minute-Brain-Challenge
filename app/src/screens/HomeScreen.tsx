@@ -70,11 +70,13 @@ export default function HomeScreen({ navigation, route }: Props) {
 
   useFocusEffect(
     useCallback(() => {
+      let active = true;
       const fetchData = async () => {
         const [stats, record] = await Promise.all([
           loadStats(),
           getTodayRecord(),
         ]);
+        if (!active) return;
         // If the game screen passed back updated stats, use whichever is higher
         // (guards against Firestore write not yet committing on web)
         const passed = route.params?.updatedStats;
@@ -89,6 +91,7 @@ export default function HomeScreen({ navigation, route }: Props) {
         setLoading(false);
       };
       void fetchData();
+      return () => { active = false; };
     }, [route.params?.updatedStats]),
   );
 
@@ -102,13 +105,16 @@ export default function HomeScreen({ navigation, route }: Props) {
 
   // Load daily rewarded ad count on mount and whenever screen is focused
   useEffect(() => {
+    let isMounted = true;
     const loadRewardedCount = async () => {
       const count = await getDailyRewardedCount();
       const available = await canWatchRewardedToday();
+      if (!isMounted) return;
       setRewardedCount(count);
       setRewardedAvailable(available);
     };
     void loadRewardedCount();
+    return () => { isMounted = false; };
   }, []);
 
   // Urgency pulse on the "Watch ad" button when energy is low

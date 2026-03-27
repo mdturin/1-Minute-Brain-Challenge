@@ -13,28 +13,7 @@ import { signIn, signUp, signOut, onAuthStateChanged, resetPassword, linkWithGoo
 import { useSubscription } from '../logic/useSubscription';
 import { Ionicons } from '@expo/vector-icons';
 import { COUNTRIES } from '../constants/countries';
-
-
-const AVATARS = [
-  { id: 'oni',      emoji: '👹', bg: '#7f1d1d' },
-  { id: 'goblin',   emoji: '👺', bg: '#14532d' },
-  { id: 'skull',    emoji: '💀', bg: '#1c1917' },
-  { id: 'robot',    emoji: '🤖', bg: '#1e3a5f' },
-  { id: 'monster',  emoji: '👾', bg: '#3b0764' },
-  { id: 'dragon',   emoji: '🐲', bg: '#064e3b' },
-  { id: 'zombie',   emoji: '🧟', bg: '#1a2e05' },
-  { id: 'wolf',     emoji: '🐺', bg: '#1e293b' },
-  { id: 'scorpion', emoji: '🦂', bg: '#431407' },
-  { id: 'bat',      emoji: '🦇', bg: '#2e1065' },
-];
-
-function getAvatar(avatarId: string | undefined, uid: string) {
-  if (avatarId) {
-    const found = AVATARS.find(a => a.id === avatarId);
-    if (found) return found;
-  }
-  return AVATARS[uid.charCodeAt(0) % AVATARS.length];
-}
+import { AVATARS, getAvatar } from '../constants/avatars';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -129,16 +108,19 @@ export default function ProfileScreen({ navigation }: Props) {
   };
 
   useEffect(() => {
+    let isMounted = true;
     const unsubscribe = onAuthStateChanged((authUser) => {
+      if (!isMounted) return;
       setUser(authUser);
       if (authUser) {
         const init = async () => {
           try {
             const [loadedProfile, loadedStats] = await Promise.all([loadUserProfile(), loadStats()]);
+            if (!isMounted) return;
             setProfile(loadedProfile);
             setStats(loadedStats);
           } catch {
-            setHasError(true);
+            if (isMounted) setHasError(true);
           }
         };
         void init();
@@ -147,7 +129,10 @@ export default function ProfileScreen({ navigation }: Props) {
         setStats(null);
       }
     });
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const filteredCountries = countrySearch.trim()

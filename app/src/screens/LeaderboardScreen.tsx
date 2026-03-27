@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
@@ -15,10 +15,14 @@ import {
   fetchTopLeaderboard,
   fetchWeeklyLeaderboard,
   fetchMyRank,
+  computeWeeklyRank,
+  nextWeekResetMs,
   type LeaderboardEntry,
 } from '../storage/leaderboard';
+import { getAvatar } from '../constants/avatars';
 import { getCurrentUser } from '../logic/auth';
 import { loadStats } from '../storage/stats';
+import { loadUserProfile } from '../storage/userProfile';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Leaderboard'>;
 type Tab = 'alltime' | 'weekly';
@@ -31,15 +35,22 @@ function countryFlag(country: string): string {
   return String.fromCodePoint(...codePoints);
 }
 
-function getInitials(name: string): string {
-  return name.trim().split(/\s+/).map((w) => w[0] ?? '').join('').toUpperCase().slice(0, 2) || '?';
-}
 
 function RankMedal({ rank }: { rank: number }) {
   if (rank === 1) return <Text style={styles.medal}>🥇</Text>;
   if (rank === 2) return <Text style={styles.medal}>🥈</Text>;
   if (rank === 3) return <Text style={styles.medal}>🥉</Text>;
   return <Text style={styles.rankNumber}>#{rank}</Text>;
+}
+
+function formatCountdown(totalSeconds: number): string {
+  const d = Math.floor(totalSeconds / 86400);
+  const h = Math.floor((totalSeconds % 86400) / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  return `${m}m ${s}s`;
 }
 
 export default function LeaderboardScreen({ navigation }: Props) {
@@ -49,8 +60,23 @@ export default function LeaderboardScreen({ navigation }: Props) {
   const [myEntry, setMyEntry] = useState<LeaderboardEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [resetSecondsLeft, setResetSecondsLeft] = useState(() =>
+    Math.max(0, Math.floor((nextWeekResetMs() - Date.now()) / 1000)),
+  );
+  const isMountedRef = useRef(true);
 
   const user = getCurrentUser();
+
+  useEffect(() => {
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setResetSecondsLeft(Math.max(0, Math.floor((nextWeekResetMs() - Date.now()) / 1000)));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -58,23 +84,34 @@ export default function LeaderboardScreen({ navigation }: Props) {
     try {
       const fetchFn = tab === 'alltime' ? fetchTopLeaderboard : fetchWeeklyLeaderboard;
       const [data, stats] = await Promise.all([
-        fetchFn(50),
+        fetchFn(25),
         user ? loadStats() : Promise.resolve(null),
       ]);
       setEntries(data);
 
       if (user && stats) {
-        const rank = await fetchMyRank(user.uid, stats.bestScore);
+        const rank = tab === 'weekly'
+          ? computeWeeklyRank(data, stats.bestScore)
+          : await fetchMyRank(user.uid, stats.bestScore);
         setMyRank(rank);
         const found = data.find((e) => e.uid === user.uid);
         if (!found) {
+          // Show pinned row immediately with auth display name; enrich with profile async
           setMyEntry({
             uid: user.uid,
-            displayName: 'You',
+            displayName: user.displayName || 'You',
             country: '',
             bestScore: stats.bestScore,
             updatedAt: Date.now(),
           });
+          // Non-blocking profile fetch to update avatar + country without blocking load
+          loadUserProfile().then((profile) => {
+            if (!isMountedRef.current) return;
+            setMyEntry((prev) => prev
+              ? { ...prev, displayName: profile.displayName || prev.displayName, country: profile.country ?? '', avatarId: profile.avatarId }
+              : prev
+            );
+          }).catch(() => {/* leave entry as-is */});
         } else {
           setMyEntry(null);
         }
@@ -93,13 +130,14 @@ export default function LeaderboardScreen({ navigation }: Props) {
   const renderEntry = ({ item, index }: { item: LeaderboardEntry; index: number }) => {
     const rank = index + 1;
     const isMe = user?.uid === item.uid;
+    const av = getAvatar(item.avatarId, item.uid);
     return (
       <View style={[styles.row, isMe && styles.rowHighlight]}>
         <View style={styles.rankCell}>
           <RankMedal rank={rank} />
         </View>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(item.displayName)}</Text>
+        <View style={[styles.avatar, { backgroundColor: av.bg }]}>
+          <Text style={styles.avatarEmoji}>{av.emoji}</Text>
         </View>
         <View style={styles.nameCell}>
           <Text style={styles.displayName} numberOfLines={1}>
@@ -140,6 +178,15 @@ export default function LeaderboardScreen({ navigation }: Props) {
           <Text style={[styles.tabText, tab === 'weekly' && styles.tabTextActive]}>This Week</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Weekly reset countdown */}
+      {tab === 'weekly' && (
+        <View style={styles.countdownChip}>
+          <Ionicons name="refresh-outline" size={13} color="#64748b" />
+          <Text style={styles.countdownLabel}>Resets in</Text>
+          <Text style={styles.countdownValue}>{formatCountdown(resetSecondsLeft)}</Text>
+        </View>
+      )}
 
       {/* Guest prompt */}
       {!user && (
@@ -188,15 +235,35 @@ export default function LeaderboardScreen({ navigation }: Props) {
                 </View>
               }
               ListFooterComponent={
-                myEntry && myRank ? (
-                  <View style={styles.myRankBanner}>
-                    <View style={styles.myRankRow}>
-                      <Ionicons name="person-circle-outline" size={20} color="#a5b4fc" />
-                      <Text style={styles.myRankText}>Your rank: #{myRank}</Text>
-                      <Text style={styles.myRankScore}>{myEntry.bestScore.toLocaleString()} pts</Text>
-                    </View>
-                  </View>
-                ) : null
+                myEntry && myRank ? (() => {
+                  const av = getAvatar(myEntry.avatarId, myEntry.uid);
+                  return (
+                    <>
+                      <View style={styles.pinnedSeparator}>
+                        <View style={styles.pinnedSeparatorLine} />
+                        <Text style={styles.pinnedSeparatorText}>Your Position</Text>
+                        <View style={styles.pinnedSeparatorLine} />
+                      </View>
+                      <View style={[styles.row, styles.rowHighlight]}>
+                        <View style={styles.rankCell}>
+                          <RankMedal rank={myRank} />
+                        </View>
+                        <View style={[styles.avatar, { backgroundColor: av.bg }]}>
+                          <Text style={styles.avatarEmoji}>{av.emoji}</Text>
+                        </View>
+                        <View style={styles.nameCell}>
+                          <Text style={styles.displayName} numberOfLines={1}>
+                            {myEntry.displayName} (you)
+                          </Text>
+                          {myEntry.country ? (
+                            <Text style={styles.countryText}>{countryFlag(myEntry.country)} {myEntry.country}</Text>
+                          ) : null}
+                        </View>
+                        <Text style={styles.scoreText}>{myEntry.bestScore.toLocaleString()}</Text>
+                      </View>
+                    </>
+                  );
+                })() : null
               }
             />
           )}
@@ -255,6 +322,28 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: '#a5b4fc',
   },
+  countdownChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    backgroundColor: '#111827',
+    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+  },
+  countdownLabel: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  countdownValue: {
+    fontSize: 12,
+    color: '#a5b4fc',
+    fontWeight: '700',
+  },
   list: {
     paddingHorizontal: 16,
     paddingBottom: 32,
@@ -290,14 +379,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#1e293b',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#a5b4fc',
+  avatarEmoji: {
+    fontSize: 20,
   },
   nameCell: {
     flex: 1,
@@ -343,30 +429,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
   },
-  myRankBanner: {
-    backgroundColor: 'rgba(99,102,241,0.12)',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(165,180,252,0.25)',
-  },
-  myRankRow: {
+  pinnedSeparator: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginTop: 4,
+    marginBottom: 8,
   },
-  myRankText: {
+  pinnedSeparatorLine: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#a5b4fc',
+    height: 1,
+    backgroundColor: 'rgba(165,180,252,0.15)',
   },
-  myRankScore: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#22c55e',
+  pinnedSeparatorText: {
+    fontSize: 11,
+    color: '#475569',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   guestContainer: {
     flex: 1,

@@ -19,8 +19,9 @@ import { loadUserProfile } from '../storage/userProfile';
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
-  const [loading, setLoading] = useState(false);
+  const [loadingType, setLoadingType] = useState<'google' | 'guest' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const loading = loadingType !== null;
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -30,12 +31,12 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleGoogle = async () => {
     setError(null);
-    setLoading(true);
+    setLoadingType('google');
     try {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
       if (!isSuccessResponse(response)) {
-        setLoading(false);
+        setLoadingType(null);
         return;
       }
       const { idToken } = response.data;
@@ -51,20 +52,20 @@ export default function LoginScreen({ navigation }: Props) {
       navigation.replace(accepted === 'true' ? 'Home' : 'Consent');
     } catch {
       setError('Google sign-in failed. Please try again.');
-      setLoading(false);
+      setLoadingType(null);
     }
   };
 
   const handleGuest = async () => {
     setError(null);
-    setLoading(true);
+    setLoadingType('guest');
     try {
       await signInAsGuest();
       const accepted = await AsyncStorage.getItem('hasAcceptedPolicy');
       navigation.replace(accepted === 'true' ? 'Home' : 'Consent');
     } catch {
       setError('Could not continue as guest. Please try again.');
-      setLoading(false);
+      setLoadingType(null);
     }
   };
 
@@ -85,6 +86,14 @@ export default function LoginScreen({ navigation }: Props) {
           <Text style={styles.subtext}>Save your progress and compete globally</Text>
         </View>
 
+        {/* Error */}
+        {error && (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle" size={16} color="#ef4444" />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
         {/* Buttons */}
         <View style={styles.buttonsArea}>
           <TouchableOpacity
@@ -93,8 +102,17 @@ export default function LoginScreen({ navigation }: Props) {
             disabled={loading}
             activeOpacity={0.85}
           >
-            <Text style={styles.googleLogo}>G</Text>
-            <Text style={styles.googleText}>Continue with Google</Text>
+            {loadingType === 'google' ? (
+              <>
+                <ActivityIndicator size="small" color="#6366f1" />
+                <Text style={styles.googleText}>Signing in…</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.googleLogo}>G</Text>
+                <Text style={styles.googleText}>Continue with Google</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -103,20 +121,23 @@ export default function LoginScreen({ navigation }: Props) {
             disabled={loading}
             activeOpacity={0.85}
           >
-            <Ionicons name="person-outline" size={18} color="#94a3b8" />
-            <Text style={styles.guestText}>Continue as Guest</Text>
+            {loadingType === 'guest' ? (
+              <>
+                <ActivityIndicator size="small" color="#94a3b8" />
+                <Text style={styles.guestText}>Loading…</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="person-outline" size={18} color="#94a3b8" />
+                <Text style={styles.guestText}>Continue as Guest</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <Text style={styles.guestNote}>
             You can sign in later from your Profile
           </Text>
         </View>
-
-        {/* Loading / Error */}
-        {loading && (
-          <ActivityIndicator size="small" color="#6366f1" style={styles.spinner} />
-        )}
-        {error && <Text style={styles.errorText}>{error}</Text>}
       </View>
     </SafeAreaView>
   );
@@ -216,13 +237,23 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.5,
   },
-  spinner: {
-    marginTop: 8,
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.3)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 4,
   },
   errorText: {
     color: '#ef4444',
-    textAlign: 'center',
     fontSize: 13,
-    marginBottom: 8,
+    fontWeight: '600',
+    flexShrink: 1,
   },
 });

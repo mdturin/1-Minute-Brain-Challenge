@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet, Text, View, Modal, TouchableOpacity, Animated } from 'react-native';
+import { StyleSheet, Text, View, Modal, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import BannerAd from '../components/BannerAd';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -23,7 +23,6 @@ import TimeDelayedView from '../components/puzzles/TimeDelayedView';
 import ReverseLogicView from '../components/puzzles/ReverseLogicView';
 import MultiStepView from '../components/puzzles/MultiStepView';
 import FakePatternView from '../components/puzzles/FakePatternView';
-import VisualRotationView from '../components/puzzles/VisualRotationView';
 import HiddenRuleView from '../components/puzzles/HiddenRuleView';
 import RapidComparisonView from '../components/puzzles/RapidComparisonView';
 import GoNoGoView from '../components/puzzles/GoNoGoView';
@@ -60,7 +59,6 @@ const PUZZLE_ICONS: Record<string, string> = {
   reverse_logic: 'close-circle-outline',
   multi_step: 'git-merge-outline',
   fake_pattern: 'trending-up-outline',
-  visual_rotation: 'sync-outline',
   hidden_rule: 'key-outline',
   rapid_comparison: 'scale-outline',
   go_no_go: 'flash-outline',
@@ -84,7 +82,6 @@ const PUZZLE_LABELS: Record<string, string> = {
   reverse_logic: 'Reverse Logic',
   multi_step: 'Multi-Step',
   fake_pattern: 'Fake Pattern',
-  visual_rotation: 'Visual Rotation',
   hidden_rule: 'Hidden Rule',
   rapid_comparison: 'Rapid Comparison',
   go_no_go: 'Go / No-Go',
@@ -123,6 +120,7 @@ export default function GameScreen({ navigation, route }: Props) {
   const recentTypesRef = useRef<PuzzleType[]>([]);
   const [status, setStatus] = useState<'playing' | 'finished'>('playing');
   const [showSummary, setShowSummary] = useState(false);
+  const [adLoading, setAdLoading] = useState(false);
   const [lastAnswer, setLastAnswer] = useState<'correct' | 'wrong' | null>(null);
   const [lastPoints, setLastPoints] = useState(0);
   const [savedStats, setSavedStats] = useState<GameStats | null>(null);
@@ -266,11 +264,14 @@ export default function GameScreen({ navigation, route }: Props) {
   };
 
   const handleBackToHome = () => {
+    if (adLoading) return;
     const go = () => {
+      setAdLoading(false);
       setShowSummary(false);
       goBack();
     };
     if (canShowInterstitialNow()) {
+      setAdLoading(true);
       showInterstitialWithCallbacks(go, go);
     } else {
       go();
@@ -278,7 +279,9 @@ export default function GameScreen({ navigation, route }: Props) {
   };
 
   const handlePlayAgain = () => {
+    if (adLoading) return;
     const resetAndPlay = () => {
+      setAdLoading(false);
       setShowSummary(false);
       setRemainingTime(difficultyConfig.durationSeconds);
       setScore(0);
@@ -293,6 +296,7 @@ export default function GameScreen({ navigation, route }: Props) {
       puzzlesSolvedRef.current = 0;
     };
     if (canShowInterstitialNow()) {
+      setAdLoading(true);
       showInterstitialWithCallbacks(resetAndPlay, resetAndPlay);
     } else {
       resetAndPlay();
@@ -332,8 +336,6 @@ export default function GameScreen({ navigation, route }: Props) {
         return <MultiStepView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       case 'fake_pattern':
         return <FakePatternView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
-      case 'visual_rotation':
-        return <VisualRotationView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       case 'hidden_rule':
         return <HiddenRuleView puzzle={currentPuzzle} onAnswer={handleAnswer} />;
       case 'rapid_comparison':
@@ -496,25 +498,51 @@ export default function GameScreen({ navigation, route }: Props) {
               )}
 
               {!isDailyChallenge && (
-                <TouchableOpacity style={styles.modalPlayAgain} onPress={handlePlayAgain} activeOpacity={0.8}>
-                  <Ionicons name="refresh" size={18} color="#fff" />
-                  <Text style={styles.modalPlayAgainText}>Play Again</Text>
+                <TouchableOpacity
+                  style={[styles.modalPlayAgain, adLoading && styles.modalButtonDisabled]}
+                  onPress={handlePlayAgain}
+                  activeOpacity={0.8}
+                  disabled={adLoading}
+                >
+                  {adLoading ? (
+                    <>
+                      <ActivityIndicator size="small" color="#fff" />
+                      <Text style={styles.modalPlayAgainText}>Loading…</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="refresh" size={18} color="#fff" />
+                      <Text style={styles.modalPlayAgainText}>Play Again</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               )}
 
               <TouchableOpacity
-                style={[styles.modalHomeButton, isDailyChallenge && styles.modalHomeButtonPrimary]}
+                style={[styles.modalHomeButton, isDailyChallenge && styles.modalHomeButtonPrimary, adLoading && styles.modalButtonDisabled]}
                 onPress={handleBackToHome}
                 activeOpacity={0.8}
+                disabled={adLoading}
               >
-                <Ionicons
-                  name={isDailyChallenge ? 'calendar-outline' : 'home-outline'}
-                  size={18}
-                  color={isDailyChallenge ? '#fbbf24' : '#a5b4fc'}
-                />
-                <Text style={[styles.modalHomeText, isDailyChallenge && styles.modalHomeTextDaily]}>
-                  {isDailyChallenge ? 'See Daily History' : 'Back to Home'}
-                </Text>
+                {adLoading ? (
+                  <>
+                    <ActivityIndicator size="small" color={isDailyChallenge ? '#fbbf24' : '#a5b4fc'} />
+                    <Text style={[styles.modalHomeText, isDailyChallenge && styles.modalHomeTextDaily]}>
+                      Loading…
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons
+                      name={isDailyChallenge ? 'calendar-outline' : 'home-outline'}
+                      size={18}
+                      color={isDailyChallenge ? '#fbbf24' : '#a5b4fc'}
+                    />
+                    <Text style={[styles.modalHomeText, isDailyChallenge && styles.modalHomeTextDaily]}>
+                      {isDailyChallenge ? 'See Daily History' : 'Back to Home'}
+                    </Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -779,5 +807,8 @@ const styles = StyleSheet.create({
   },
   modalHomeTextDaily: {
     color: '#fbbf24',
+  },
+  modalButtonDisabled: {
+    opacity: 0.5,
   },
 });

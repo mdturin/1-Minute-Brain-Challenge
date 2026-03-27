@@ -44,15 +44,18 @@ export default function DailyChallengeScreen({ navigation }: Props) {
   const today = localDateString();
 
   useEffect(() => {
+    let isMounted = true;
     const load = async () => {
       const [record, history] = await Promise.all([
         getTodayRecord(),
         getRecentHistory(7),
       ]);
+      if (!isMounted) return;
       setTodayRecord(record);
       setRecentHistory(history);
     };
     void load();
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {

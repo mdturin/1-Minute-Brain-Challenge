@@ -115,6 +115,7 @@ export async function updateStats(params: {
             country: profile.country ?? '',
             bestScore: next.bestScore,
             updatedAt: Date.now(),
+            avatarId: profile.avatarId,
           });
         } catch {
           // leaderboard failure must not block gameplay

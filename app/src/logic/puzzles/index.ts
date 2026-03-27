@@ -13,7 +13,6 @@ import { generateTimeDelayedPuzzle } from './timeDelayed';
 import { generateReverseLogicPuzzle } from './reverseLogic';
 import { generateMultiStepPuzzle } from './multiStep';
 import { generateFakePatternPuzzle } from './fakePattern';
-import { generateVisualRotationPuzzle } from './visualRotation';
 import { generateHiddenRulePuzzle } from './hiddenRule';
 import { generateRapidComparisonPuzzle } from './rapidComparison';
 import { generateGoNoGoPuzzle } from './goNoGo';
@@ -36,7 +35,6 @@ const puzzleGenerators: Record<PuzzleType, (difficulty: Difficulty, rng?: () => 
   reverse_logic: generateReverseLogicPuzzle,
   multi_step: generateMultiStepPuzzle,
   fake_pattern: generateFakePatternPuzzle,
-  visual_rotation: generateVisualRotationPuzzle,
   hidden_rule: generateHiddenRulePuzzle,
   rapid_comparison: generateRapidComparisonPuzzle,
   go_no_go: generateGoNoGoPuzzle,
@@ -60,7 +58,6 @@ const puzzleTypes: PuzzleType[] = [
   'reverse_logic',
   'multi_step',
   'fake_pattern',
-  'visual_rotation',
   'hidden_rule',
   'rapid_comparison',
   'go_no_go',

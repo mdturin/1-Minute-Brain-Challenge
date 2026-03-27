@@ -1,4 +1,4 @@
-export type PuzzleType = 'mental_math' | 'memory_sequence' | 'logic_mini' | 'pattern_visual' | 'word_scramble' | 'odd_one_out' | 'symbol_count' | 'dual_task' | 'instruction_flip' | 'time_delayed' | 'reverse_logic' | 'multi_step' | 'fake_pattern' | 'visual_rotation' | 'hidden_rule' | 'rapid_comparison' | 'go_no_go' | 'stroop_effect' | 'count_distraction' | 'spot_misspelling' | 'category_clash';
+export type PuzzleType = 'mental_math' | 'memory_sequence' | 'logic_mini' | 'pattern_visual' | 'word_scramble' | 'odd_one_out' | 'symbol_count' | 'dual_task' | 'instruction_flip' | 'time_delayed' | 'reverse_logic' | 'multi_step' | 'fake_pattern' | 'hidden_rule' | 'rapid_comparison' | 'go_no_go' | 'stroop_effect' | 'count_distraction' | 'spot_misspelling' | 'category_clash';
 
 export type PatternVisualSymbolKey = 'circle' | 'square' | 'triangle' | 'star';
 
