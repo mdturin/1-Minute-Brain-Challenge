@@ -133,6 +133,12 @@ export default function GameScreen({ navigation, route }: Props) {
   }, []);
 
   const feedbackOpacity = useRef(new Animated.Value(0)).current;
+  const isAnsweringRef = useRef(false);
+
+  // Reset double-tap guard after new puzzle renders
+  useEffect(() => {
+    isAnsweringRef.current = false;
+  }, [currentPuzzle]);
 
   useEffect(() => {
     setRemainingTime(difficultyConfig.durationSeconds);
@@ -196,16 +202,18 @@ export default function GameScreen({ navigation, route }: Props) {
   const showFeedback = (type: 'correct' | 'wrong', points: number) => {
     setLastAnswer(type);
     setLastPoints(points);
+    feedbackOpacity.stopAnimation();
     feedbackOpacity.setValue(1);
     Animated.timing(feedbackOpacity, {
       toValue: 0,
       duration: 800,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
   };
 
   const handleAnswer = (isCorrect: boolean) => {
-    if (status !== 'playing' || remainingTime <= 0) return;
+    if (status !== 'playing' || remainingTime <= 0 || isAnsweringRef.current) return;
+    isAnsweringRef.current = true;
 
     const remainingFraction = remainingTime / difficultyConfig.durationSeconds;
     const delta = calculateScoreForAnswer({

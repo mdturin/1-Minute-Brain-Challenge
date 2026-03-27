@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Puzzle } from '../../logic/puzzles';
 import OptionButton from '../OptionButton';
@@ -14,22 +14,22 @@ export default function TimeDelayedView({ puzzle, onAnswer }: Props) {
 
   const [phase, setPhase] = useState<'showing' | 'hidden' | 'answering'>('showing');
   const [countdown, setCountdown] = useState(Math.ceil(showDurationMs / 1000));
+  const countdownRef = useRef(Math.ceil(showDurationMs / 1000));
 
   // Phase 1: show sequence, countdown
   useEffect(() => {
     if (phase !== 'showing') return;
+    countdownRef.current = Math.ceil(showDurationMs / 1000);
     const interval = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          clearInterval(interval);
-          setPhase('hidden');
-          return 0;
-        }
-        return c - 1;
-      });
+      countdownRef.current -= 1;
+      setCountdown(countdownRef.current);
+      if (countdownRef.current <= 0) {
+        clearInterval(interval);
+        setPhase('hidden');
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [phase]);
+  }, [phase, showDurationMs]);
 
   // Phase 2: brief "hidden" flash before answering
   useEffect(() => {

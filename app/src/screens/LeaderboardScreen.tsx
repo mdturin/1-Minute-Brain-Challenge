@@ -87,8 +87,6 @@ export default function LeaderboardScreen({ navigation }: Props) {
         fetchFn(25),
         user ? loadStats() : Promise.resolve(null),
       ]);
-      setEntries(data);
-
       if (user && stats) {
         const rank = tab === 'weekly'
           ? computeWeeklyRank(data, stats.bestScore)
@@ -96,25 +94,46 @@ export default function LeaderboardScreen({ navigation }: Props) {
         setMyRank(rank);
         const found = data.find((e) => e.uid === user.uid);
         if (!found) {
-          // Show pinned row immediately with auth display name; enrich with profile async
-          setMyEntry({
+          const synthetic: LeaderboardEntry = {
             uid: user.uid,
             displayName: user.displayName || 'You',
             country: '',
             bestScore: stats.bestScore,
             updatedAt: Date.now(),
-          });
-          // Non-blocking profile fetch to update avatar + country without blocking load
-          loadUserProfile().then((profile) => {
-            if (!isMountedRef.current) return;
-            setMyEntry((prev) => prev
-              ? { ...prev, displayName: profile.displayName || prev.displayName, country: profile.country ?? '', avatarId: profile.avatarId }
-              : prev
-            );
-          }).catch(() => {/* leave entry as-is */});
+          };
+          if (rank && rank <= 25) {
+            // Inject into the visible list at the correct position
+            const merged = [...data];
+            merged.splice(rank - 1, 0, synthetic);
+            setEntries(merged.slice(0, 25));
+            setMyEntry(null);
+            // Enrich injected row with profile data async
+            loadUserProfile().then((profile) => {
+              if (!isMountedRef.current) return;
+              setEntries((prev) => prev.map((e) =>
+                e.uid === user.uid
+                  ? { ...e, displayName: profile.displayName || e.displayName, country: profile.country ?? '', avatarId: profile.avatarId }
+                  : e
+              ));
+            }).catch(() => {});
+          } else {
+            // Outside top 25 — show pinned footer row
+            setEntries(data);
+            setMyEntry(synthetic);
+            loadUserProfile().then((profile) => {
+              if (!isMountedRef.current) return;
+              setMyEntry((prev) => prev
+                ? { ...prev, displayName: profile.displayName || prev.displayName, country: profile.country ?? '', avatarId: profile.avatarId }
+                : prev
+              );
+            }).catch(() => {});
+          }
         } else {
+          setEntries(data);
           setMyEntry(null);
         }
+      } else {
+        setEntries(data);
       }
     } catch {
       setError(true);
