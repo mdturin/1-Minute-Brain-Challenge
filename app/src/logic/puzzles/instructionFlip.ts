@@ -24,6 +24,10 @@ function randomChoice<T>(arr: T[], rng?: () => number): T {
   return arr[Math.floor((rng ?? Math.random)() * arr.length)]!;
 }
 
+function shuffle<T>(arr: T[], rng?: () => number): T[] {
+  return [...arr].sort(() => (rng ?? Math.random)() - 0.5);
+}
+
 function isPrime(n: number): boolean {
   if (n < 2) return false;
   for (let i = 2; i <= Math.sqrt(n); i++) {
@@ -90,31 +94,21 @@ export function generateInstructionFlipPuzzle(difficulty: Difficulty, rng?: () =
       break;
     }
     case 'even': {
-      // 1 even + 3 odd
-      const evenPool = Array.from({ length: Math.floor((max - min) / 2) + 1 }, (_, i) => min + i * 2).filter(
-        (n) => n % 2 === 0,
-      );
-      const oddPool = Array.from({ length: Math.ceil((max - min) / 2) }, (_, i) => min + i * 2 + 1).filter(
-        (n) => n % 2 !== 0,
-      );
-      correct = randomChoice(evenPool, rng);
-      const oddSet = new Set<number>();
-      while (oddSet.size < 3) oddSet.add(randomChoice(oddPool, rng));
-      others = Array.from(oddSet);
+      // 1 even + 3 odd — filter the full range so parity is always correct
+      const allNums = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+      const evenPool = shuffle(allNums.filter((n) => n % 2 === 0), rng);
+      const oddPool  = shuffle(allNums.filter((n) => n % 2 !== 0), rng);
+      correct = evenPool[0]!;
+      others  = oddPool.slice(0, 3);
       break;
     }
     case 'odd': {
-      // 1 odd + 3 even
-      const oddPool = Array.from({ length: Math.ceil((max - min) / 2) }, (_, i) => min + i * 2 + 1).filter(
-        (n) => n % 2 !== 0,
-      );
-      const evenPool = Array.from({ length: Math.floor((max - min) / 2) + 1 }, (_, i) => min + i * 2).filter(
-        (n) => n % 2 === 0,
-      );
-      correct = randomChoice(oddPool, rng);
-      const evenSet = new Set<number>();
-      while (evenSet.size < 3) evenSet.add(randomChoice(evenPool, rng));
-      others = Array.from(evenSet);
+      // 1 odd + 3 even — filter the full range so parity is always correct
+      const allNums = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+      const oddPool  = shuffle(allNums.filter((n) => n % 2 !== 0), rng);
+      const evenPool = shuffle(allNums.filter((n) => n % 2 === 0), rng);
+      correct = oddPool[0]!;
+      others  = evenPool.slice(0, 3);
       break;
     }
     case 'closest_to_10': {
@@ -134,19 +128,12 @@ export function generateInstructionFlipPuzzle(difficulty: Difficulty, rng?: () =
     }
     case 'prime':
     default: {
-      // 1 prime + 3 non-primes in range
-      const primes = Array.from({ length: max - min + 1 }, (_, i) => min + i).filter(isPrime);
-      const nonPrimes = Array.from({ length: max - min + 1 }, (_, i) => min + i).filter(
-        (n) => !isPrime(n) && n > 1,
-      );
-      correct = randomChoice(primes.length > 0 ? primes : [2, 3, 5, 7], rng);
-      const npSet = new Set<number>();
-      let att = 0;
-      while (npSet.size < 3 && att < 200) {
-        npSet.add(randomChoice(nonPrimes, rng));
-        att++;
-      }
-      others = Array.from(npSet);
+      // 1 prime + 3 non-primes in range — use pool slice, no rejection loop
+      const allNums = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+      const primePool    = shuffle(allNums.filter(isPrime), rng);
+      const nonPrimePool = shuffle(allNums.filter((n) => !isPrime(n) && n > 1), rng);
+      correct = primePool.length > 0 ? primePool[0]! : 2;
+      others  = nonPrimePool.slice(0, 3);
       break;
     }
   }

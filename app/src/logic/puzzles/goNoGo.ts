@@ -50,11 +50,14 @@ const RULES: GoNoGoRule[] = [
 ];
 
 export function generateGoNoGoPuzzle(difficulty: Difficulty, rng?: () => number): Puzzle {
+  // greater_than_50 and less_than_50 require range > 50 to have a usable pool
+  // of both targets and non-targets — they only work correctly at hard (range 99).
+  // Medium uses divisible_by_3 instead to keep variety without empty pools.
   const availableRules =
     difficulty === 'easy'
       ? [RULES[0]!, RULES[1]!]
       : difficulty === 'medium'
-        ? [RULES[0]!, RULES[1]!, RULES[2]!, RULES[3]!]
+        ? [RULES[0]!, RULES[1]!, RULES[4]!]
         : RULES;
 
   const rule = availableRules[randomInt(0, availableRules.length - 1, rng)]!;
@@ -62,26 +65,17 @@ export function generateGoNoGoPuzzle(difficulty: Difficulty, rng?: () => number)
   const range = difficulty === 'easy' ? 20 : difficulty === 'medium' ? 50 : 99;
   const gridSize = difficulty === 'easy' ? 6 : difficulty === 'medium' ? 9 : 12;
 
-  // Generate numbers ensuring mix of targets and non-targets
-  const numbers: number[] = [];
+  // Build explicit pools first, then slice — no rejection-sampling loop that
+  // could spin forever when the valid candidate set is smaller than needed.
+  const allNums = Array.from({ length: range }, (_, i) => i + 1);
+  const targetPool = shuffle(allNums.filter((n) => rule.isTarget(n)), rng);
+  const nonTargetPool = shuffle(allNums.filter((n) => !rule.isTarget(n)), rng);
+
   const targetCount = Math.floor(gridSize * 0.4); // ~40% are targets
-  let added = 0;
+  const pickedTargets = targetPool.slice(0, targetCount);
+  const pickedNonTargets = nonTargetPool.slice(0, gridSize - pickedTargets.length);
 
-  while (added < targetCount) {
-    const n = randomInt(1, range, rng);
-    if (rule.isTarget(n) && !numbers.includes(n)) {
-      numbers.push(n);
-      added++;
-    }
-  }
-  while (numbers.length < gridSize) {
-    const n = randomInt(1, range, rng);
-    if (!rule.isTarget(n) && !numbers.includes(n)) {
-      numbers.push(n);
-    }
-  }
-
-  const shuffledNumbers = shuffle(numbers, rng);
+  const shuffledNumbers = shuffle([...pickedTargets, ...pickedNonTargets], rng);
 
   // The puzzle asks: "How many TARGET numbers are in this grid?"
   const targetNumbers = shuffledNumbers.filter((n) => rule.isTarget(n));

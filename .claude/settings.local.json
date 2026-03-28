@@ -33,7 +33,8 @@
       "Bash(done)",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\(''''jest'''', {}\\), indent=2\\)\\)\")",
       "Bash(find C:/Users/Seturin/.claude/projects/E--Project-1-Minute-Brain-Challenge -name mcp-Claude_Preview-preview_network*.txt)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(find 'E:/Project/1 Minute Brain Challenge' -name *.rules -o -name firestore.rules)"
     ]
   }
 }

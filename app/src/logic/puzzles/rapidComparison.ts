@@ -56,14 +56,23 @@ function makeTriple(difficulty: Difficulty, rng?: () => number): [ComparisonItem
       const dA = randomInt(2, 10, rng);
       const nA = randomInt(1, dA - 1, rng);
       const vA = nA / dA;
-      const dB = randomInt(2, 10, rng);
+      // Use `let` for dB/dC so we can regenerate the denominator when the only
+      // possible numerator produces a fraction too close to vA or vB.
+      // (e.g. dB=2 → nB can only be 1 → vB=0.5 forever if vA≈0.5)
+      let dB = randomInt(2, 10, rng);
       let nB = randomInt(1, dB - 1, rng);
       let vB = nB / dB;
-      while (Math.abs(vA - vB) < 0.05 || vA === vB) { nB = randomInt(1, dB - 1, rng); vB = nB / dB; }
-      const dC = randomInt(2, 10, rng);
+      let attB = 0;
+      while ((Math.abs(vA - vB) < 0.05 || vA === vB) && attB < 50) {
+        dB = randomInt(2, 10, rng); nB = randomInt(1, dB - 1, rng); vB = nB / dB; attB++;
+      }
+      let dC = randomInt(2, 10, rng);
       let nC = randomInt(1, dC - 1, rng);
       let vC = nC / dC;
-      while (Math.abs(vA - vC) < 0.05 || Math.abs(vB - vC) < 0.05 || vA === vC || vB === vC) { nC = randomInt(1, dC - 1, rng); vC = nC / dC; }
+      let attC = 0;
+      while ((Math.abs(vA - vC) < 0.05 || Math.abs(vB - vC) < 0.05 || vA === vC || vB === vC) && attC < 50) {
+        dC = randomInt(2, 10, rng); nC = randomInt(1, dC - 1, rng); vC = nC / dC; attC++;
+      }
       return [
         { display: `${nA}/${dA}`, value: vA },
         { display: `${nB}/${dB}`, value: vB },

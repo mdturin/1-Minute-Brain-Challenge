@@ -91,6 +91,11 @@ const PUZZLE_LABELS: Record<string, string> = {
   category_clash: 'Category Clash',
 };
 
+// Module-level lock shared across ALL React root instances (including duplicates
+// created by Expo Web HMR hot-reloads). A per-component useRef only guards one
+// root — this ensures only one answer can be in-flight across the entire page.
+let _answerInFlight = false;
+
 export default function GameScreen({ navigation, route }: Props) {
   const difficultyKey = route.params.difficulty;
   const isDailyChallenge = route.params.isDailyChallenge ?? false;
@@ -124,6 +129,7 @@ export default function GameScreen({ navigation, route }: Props) {
   const [lastAnswer, setLastAnswer] = useState<'correct' | 'wrong' | null>(null);
   const [lastPoints, setLastPoints] = useState(0);
   const [savedStats, setSavedStats] = useState<GameStats | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
 
   // Refs are updated synchronously inside state setters (see handleAnswer / setStreak callbacks)
 
@@ -133,16 +139,23 @@ export default function GameScreen({ navigation, route }: Props) {
   }, []);
 
   const feedbackOpacity = useRef(new Animated.Value(0)).current;
-  const isAnsweringRef = useRef(false);
+  // Drives the card entrance animation — resets to 0 then springs to 1 on each new puzzle.
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  // Tracks which puzzleKey has already been answered. When the next puzzle
+  // renders, handleAnswer closes over a new puzzleKey value so the guard
+  // resets naturally — no async useEffect required.
+  const answeredPuzzleKeyRef = useRef(-1);
   const [puzzleKey, setPuzzleKey] = useState(0);
 
-  // Reset double-tap guard whenever a new puzzle is issued.
-  // Using puzzleKey (always increments) instead of currentPuzzle so that
-  // if puzzle generation ever fails silently the guard still resets and
-  // the buttons never lock permanently.
+  // Animate the puzzle card in whenever a new puzzle is shown.
   useEffect(() => {
-    isAnsweringRef.current = false;
-  }, [puzzleKey]);
+    cardAnim.setValue(0);
+    Animated.timing(cardAnim, {
+      toValue: 1,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [puzzleKey, cardAnim]);
 
   useEffect(() => {
     setRemainingTime(difficultyConfig.durationSeconds);
@@ -207,18 +220,26 @@ export default function GameScreen({ navigation, route }: Props) {
   const showFeedback = (type: 'correct' | 'wrong', points: number) => {
     setLastAnswer(type);
     setLastPoints(points);
+    setToastVisible(true);
     feedbackOpacity.stopAnimation();
     feedbackOpacity.setValue(1);
     Animated.timing(feedbackOpacity, {
       toValue: 0,
       duration: 800,
       useNativeDriver: true,
-    }).start();
+    }).start(() => setToastVisible(false));
   };
 
   const handleAnswer = (isCorrect: boolean) => {
-    if (status !== 'playing' || remainingTime <= 0 || isAnsweringRef.current) return;
-    isAnsweringRef.current = true;
+    // Primary guard: module-level lock shared across ALL React root instances.
+    // Prevents rapid double-taps and multi-root HMR conflicts from firing twice.
+    // Released after the card entrance animation finishes (~300 ms).
+    if (_answerInFlight) return;
+    if (status !== 'playing' || remainingTime <= 0) return;
+    _answerInFlight = true;
+    // Secondary guard: per-instance key check prevents the same puzzle from
+    // being answered twice if the module lock is somehow cleared early.
+    answeredPuzzleKeyRef.current = puzzleKey;
 
     const remainingFraction = remainingTime / difficultyConfig.durationSeconds;
     const delta = calculateScoreForAnswer({
@@ -253,12 +274,18 @@ export default function GameScreen({ navigation, route }: Props) {
       showFeedback('wrong', 0);
     }
 
+    // Compute next puzzle synchronously so the RNG and recentTypes are only
+    // advanced once (state-updater callbacks run twice in React 19 StrictMode).
+    const updatedRecent = [...recentTypesRef.current, currentPuzzle.type].slice(-4);
+    recentTypesRef.current = updatedRecent;
+    const nextPuzzle = generateRandomPuzzle(difficultyKey, updatedRecent, rngRef.current);
     setPuzzleKey((k) => k + 1);
-    setCurrentPuzzle((prev) => {
-      const updatedRecent = [...recentTypesRef.current, prev.type].slice(-4);
-      recentTypesRef.current = updatedRecent;
-      return generateRandomPuzzle(difficultyKey, updatedRecent, rngRef.current);
-    });
+    setCurrentPuzzle(nextPuzzle);
+
+    // Release the lock once the card entrance animation has finished.
+    // This is longer than the 220 ms animation to give React time to commit
+    // the new puzzle — but short enough that fast players aren't throttled.
+    setTimeout(() => { _answerInFlight = false; }, 350);
   };
 
   const goBack = () => {
@@ -412,27 +439,43 @@ export default function GameScreen({ navigation, route }: Props) {
           </Text>
         </View>
 
-        {/* Puzzle Card — key forces full remount on each new puzzle so that
-            components with internal phase state (DualTaskView, TimeDelayedView)
-            always start fresh instead of resuming a stale phase. */}
-        <View key={puzzleKey} style={styles.main}>
-          <Card>{renderPuzzle()}</Card>
-        </View>
-
-        {/* Feedback Toast */}
-        <Animated.View pointerEvents="none" style={[styles.feedbackToast, { opacity: feedbackOpacity }]}>
-          {lastAnswer === 'correct' ? (
-            <View style={styles.feedbackRow}>
-              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
-              <Text style={[styles.feedbackText, { color: '#22c55e' }]}>+{lastPoints} pts</Text>
-            </View>
-          ) : (
-            <View style={styles.feedbackRow}>
-              <Ionicons name="close-circle" size={18} color="#ef4444" />
-              <Text style={[styles.feedbackText, { color: '#ef4444' }]}>Wrong!</Text>
-            </View>
-          )}
+        {/* Puzzle Card — Animated.View drives the card entrance animation.
+            The inner View's key forces a full remount of the puzzle component
+            on each new puzzle so internal phase state (DualTaskView,
+            TimeDelayedView) always starts fresh. */}
+        <Animated.View style={[
+          styles.main,
+          {
+            opacity: cardAnim,
+            transform: [{ scale: cardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }],
+          },
+        ]}>
+          <View key={puzzleKey} style={styles.puzzleWrapper}>
+            <Card>{renderPuzzle()}</Card>
+          </View>
         </Animated.View>
+
+        {/* Feedback Toast — only mounted while visible so it never blocks taps.
+            Outer View uses the prop form of pointerEvents (reliable on RN Web)
+            so the invisible/fading toast never intercepts button presses. */}
+        {toastVisible && (
+          // eslint-disable-next-line react-native/no-inline-styles
+          <View pointerEvents="none" style={styles.feedbackToastWrapper}>
+            <Animated.View style={[styles.feedbackToast, { opacity: feedbackOpacity }]}>
+              {lastAnswer === 'correct' ? (
+                <View style={styles.feedbackRow}>
+                  <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+                  <Text style={[styles.feedbackText, { color: '#22c55e' }]}>+{lastPoints} pts</Text>
+                </View>
+              ) : (
+                <View style={styles.feedbackRow}>
+                  <Ionicons name="close-circle" size={18} color="#ef4444" />
+                  <Text style={[styles.feedbackText, { color: '#ef4444' }]}>Wrong!</Text>
+                </View>
+              )}
+            </Animated.View>
+          </View>
+        )}
 
         {/* Bottom Score/Streak */}
         <View style={styles.bottom}>
@@ -635,10 +678,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 4,
   },
-  feedbackToast: {
+  puzzleWrapper: {
+    flex: 1,
+  },
+  feedbackToastWrapper: {
     position: 'absolute',
     top: '45%',
     alignSelf: 'center',
+  },
+  feedbackToast: {
     backgroundColor: 'rgba(17,24,39,0.9)',
     paddingHorizontal: 16,
     paddingVertical: 8,
