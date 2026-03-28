@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
-import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import type { RootStackParamList } from '../../App';
@@ -23,12 +22,6 @@ export default function LoginScreen({ navigation }: Props) {
   const [loadingType, setLoadingType] = useState<'google' | 'guest' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const loading = loadingType !== null;
-
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: Constants.expoConfig?.extra?.googleWebClientId,
-    });
-  }, []);
 
   const handleGoogle = async () => {
     setError(null);

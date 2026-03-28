@@ -3,6 +3,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import Constants from 'expo-constants';
 import HomeScreen from './src/screens/HomeScreen';
 import GameScreen from './src/screens/GameScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -23,6 +25,10 @@ import { SubscriptionProvider } from './src/logic/useSubscription';
 import './src/logic/firebaseConfig'; // Initialize Firebase
 import { initializeAds } from './src/logic/adsInit';
 import { getCurrentUser } from './src/logic/auth';
+
+GoogleSignin.configure({
+  webClientId: Constants.expoConfig?.extra?.googleWebClientId,
+});
 
 export type RootStackParamList = {
   Onboarding: undefined;
