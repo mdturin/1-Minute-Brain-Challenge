@@ -185,7 +185,7 @@ export default function GameScreen({ navigation, route }: Props) {
       if (isDailyChallenge) {
         await markTodayCompleted(finalScore);
       }
-      await updateStats({ lastScore: finalScore, lastMaxStreak: finalMaxStreak });
+      await updateStats({ lastScore: finalScore, lastMaxStreak: finalMaxStreak, baseStats: savedStats ?? undefined });
       // Update local stats snapshot so the summary modal shows fresh values
       setSavedStats((prev) => {
         const base = prev ?? { bestScore: 0, gamesPlayed: 0, totalScore: 0, bestStreak: 0, currentDayStreak: 0, longestDayStreak: 0, lastPlayedDate: '' };

@@ -8,6 +8,10 @@ import { upsertLeaderboardEntry } from "./leaderboard";
 
 const STORAGE_KEY = "one-minute-brain-challenge/stats";
 
+// In-memory cache so Profile/Home always see the latest stats immediately
+// after a game ends, without waiting for another Firestore/AsyncStorage read.
+let _statsCache: GameStats | null = null;
+
 export type GameStats = {
   bestScore: number;
   gamesPlayed: number;
@@ -33,7 +37,11 @@ function advanceDayStreak(
   today: string,
   yesterday: string,
 ): Pick<GameStats, 'currentDayStreak' | 'longestDayStreak' | 'lastPlayedDate'> {
-  if (current.lastPlayedDate === today) return current;
+  if (current.lastPlayedDate === today) return {
+    currentDayStreak: current.currentDayStreak,
+    longestDayStreak: current.longestDayStreak,
+    lastPlayedDate: current.lastPlayedDate,
+  };
   const next = current.lastPlayedDate === yesterday
     ? current.currentDayStreak + 1
     : 1;
@@ -50,11 +58,15 @@ export async function loadStats(): Promise<GameStats> {
     try {
       const docRef = doc(db, "users", user.uid, "stats", "data");
       const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return { ...defaultStats, ...docSnap.data() } as GameStats;
-      } else {
-        return defaultStats;
+      const fromStorage = docSnap.exists()
+        ? ({ ...defaultStats, ...docSnap.data() } as GameStats)
+        : defaultStats;
+      // Prefer cache if it reflects more games (write may not have propagated yet)
+      if (_statsCache && _statsCache.gamesPlayed >= fromStorage.gamesPlayed) {
+        return _statsCache;
       }
+      _statsCache = fromStorage;
+      return fromStorage;
     } catch (error) {
       console.error("Error loading stats from Firestore:", error);
       throw error;
@@ -64,24 +76,25 @@ export async function loadStats(): Promise<GameStats> {
   // Fallback to local storage for guests
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return defaultStats;
+    const fromStorage = raw
+      ? { ...defaultStats, ...(JSON.parse(raw) as GameStats) }
+      : defaultStats;
+    if (_statsCache && _statsCache.gamesPlayed >= fromStorage.gamesPlayed) {
+      return _statsCache;
     }
-    const parsed = JSON.parse(raw) as GameStats;
-    return {
-      ...defaultStats,
-      ...parsed,
-    };
+    _statsCache = fromStorage;
+    return fromStorage;
   } catch {
-    return defaultStats;
+    return _statsCache ?? defaultStats;
   }
 }
 
 export async function updateStats(params: {
   lastScore: number;
   lastMaxStreak: number;
+  baseStats?: GameStats;
 }): Promise<void> {
-  const current = await loadStats();
+  const current = params.baseStats ?? await loadStats();
   const today = localDateString();
   const yesterday = yesterdayLocalDateString();
   const streakUpdate = advanceDayStreak(current, today, yesterday);
@@ -94,6 +107,10 @@ export async function updateStats(params: {
     bestStreak: Math.max(current.bestStreak, params.lastMaxStreak),
     ...streakUpdate,
   };
+
+  // Update cache immediately so any screen that calls loadStats() right after
+  // a game ends gets the correct values without waiting on Firestore/AsyncStorage.
+  _statsCache = next;
 
   const user = getCurrentUser();
   if (user) {
