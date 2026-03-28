@@ -1,61 +1,61 @@
 {
-  "expo": {
-    "name": "1 Minute Brain Challenge",
-    "slug": "one-minute-brain-challenge",
-    "version": "26.03.27.01",
-    "scheme": "com.oneminutebrain.challenge",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#050816"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.oneminutebrain.challenge"
-    },
-    "android": {
-      "package": "com.oneminutebrain.challenge",
-      "versionCode": 26032701,
-      "adaptiveIcon": {
-        "backgroundColor": "#050816",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-iap",
-      "@react-native-google-signin/google-signin",
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-1274854116614604~8487183739",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
-        }
-      ]
-    ],
-    "extra": {
-      "firebase": {
-        "apiKey": "AIzaSyCg8CjmsNN2pQdvHDwzooG1_ve_o5-7VQA",
-        "authDomain": "minute-brain-challange.firebaseapp.com",
-        "projectId": "minute-brain-challange",
-        "storageBucket": "minute-brain-challange.firebasestorage.app",
-        "messagingSenderId": "1097445883559",
-        "appId": "1:1097445883559:web:cb4f26e8c549a8d591e582",
-        "measurementId": "G-B8XJHQ1FMC"
-      },
-      "eas": {
-        "projectId": "d6f0256f-1104-4772-9ccb-7154be0d8c48"
-      },
-      "googleWebClientId": "1097445883559-q67pj6r6mtskec8g7g4gqks0jatseum1.apps.googleusercontent.com",
-      "googleAndroidClientId": "1097445883559-dqau26vrtiukejddo3pgfu1t6h6t5c8m.apps.googleusercontent.com"
-    }
-  }
+    "expo":  {
+                 "name":  "1 Minute Brain Challenge",
+                 "slug":  "one-minute-brain-challenge",
+                 "version":  "26.03.28.02",
+                 "scheme":  "com.oneminutebrain.challenge",
+                 "orientation":  "portrait",
+                 "icon":  "./assets/icon.png",
+                 "userInterfaceStyle":  "dark",
+                 "splash":  {
+                                "image":  "./assets/splash-icon.png",
+                                "resizeMode":  "contain",
+                                "backgroundColor":  "#050816"
+                            },
+                 "ios":  {
+                             "supportsTablet":  true,
+                             "bundleIdentifier":  "com.oneminutebrain.challenge"
+                         },
+                 "android":  {
+                                 "package":  "com.oneminutebrain.challenge",
+                                 "versionCode":  26032802,
+                                 "adaptiveIcon":  {
+                                                      "backgroundColor":  "#050816",
+                                                      "foregroundImage":  "./assets/android-icon-foreground.png",
+                                                      "backgroundImage":  "./assets/android-icon-background.png",
+                                                      "monochromeImage":  "./assets/android-icon-monochrome.png"
+                                                  },
+                                 "predictiveBackGestureEnabled":  false
+                             },
+                 "web":  {
+                             "favicon":  "./assets/favicon.png"
+                         },
+                 "plugins":  [
+                                 "expo-iap",
+                                 "@react-native-google-signin/google-signin",
+                                 [
+                                     "react-native-google-mobile-ads",
+                                     {
+                                         "androidAppId":  "ca-app-pub-1274854116614604~8487183739",
+                                         "iosAppId":  "ca-app-pub-3940256099942544~1458002511"
+                                     }
+                                 ]
+                             ],
+                 "extra":  {
+                               "firebase":  {
+                                                "apiKey":  "AIzaSyCg8CjmsNN2pQdvHDwzooG1_ve_o5-7VQA",
+                                                "authDomain":  "minute-brain-challange.firebaseapp.com",
+                                                "projectId":  "minute-brain-challange",
+                                                "storageBucket":  "minute-brain-challange.firebasestorage.app",
+                                                "messagingSenderId":  "1097445883559",
+                                                "appId":  "1:1097445883559:web:cb4f26e8c549a8d591e582",
+                                                "measurementId":  "G-B8XJHQ1FMC"
+                                            },
+                               "eas":  {
+                                           "projectId":  "d6f0256f-1104-4772-9ccb-7154be0d8c48"
+                                       },
+                               "googleWebClientId":  "1097445883559-q67pj6r6mtskec8g7g4gqks0jatseum1.apps.googleusercontent.com",
+                               "googleAndroidClientId":  "1097445883559-dqau26vrtiukejddo3pgfu1t6h6t5c8m.apps.googleusercontent.com"
+                           }
+             }
 }
