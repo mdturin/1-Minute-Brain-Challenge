@@ -103,7 +103,7 @@ export default function LeaderboardScreen({ navigation }: Props) {
               country: profile.country ?? found.country,
               bestScore: stats.bestScore,
               updatedAt: Date.now(),
-              avatarId: profile.avatarId,
+              ...(profile.avatarId !== undefined ? { avatarId: profile.avatarId } : {}),
             })
           ).catch(() => {});
         }

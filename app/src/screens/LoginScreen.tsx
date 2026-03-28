@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,7 +14,7 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import type { RootStackParamList } from '../../App';
-import { signInAsGuest, signInWithGoogle } from '../logic/auth';
+import { signInAsGuest, signInWithGoogle, signInWithGoogleWeb } from '../logic/auth';
 import { loadUserProfile } from '../storage/userProfile';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -33,14 +34,18 @@ export default function LoginScreen({ navigation }: Props) {
     setError(null);
     setLoadingType('google');
     try {
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      if (!isSuccessResponse(response)) {
-        setLoadingType(null);
-        return;
+      if (Platform.OS === 'web') {
+        await signInWithGoogleWeb();
+      } else {
+        await GoogleSignin.hasPlayServices();
+        const response = await GoogleSignin.signIn();
+        if (!isSuccessResponse(response)) {
+          setLoadingType(null);
+          return;
+        }
+        const { idToken } = response.data;
+        await signInWithGoogle(idToken, null);
       }
-      const { idToken } = response.data;
-      await signInWithGoogle(idToken, null);
       try {
         const profile = await loadUserProfile();
         if (profile.consentAccepted) {

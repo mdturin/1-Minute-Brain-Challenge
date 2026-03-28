@@ -7,7 +7,9 @@ import {
   signInAnonymously as firebaseSignInAnonymously,
   GoogleAuthProvider,
   signInWithCredential,
+  signInWithPopup,
   linkWithCredential,
+  linkWithPopup,
   updateProfile,
 } from "firebase/auth";
 import { auth } from "./firebaseConfig";
@@ -135,6 +137,32 @@ export const linkWithGoogle = async (idToken: string | null, accessToken: string
   if (accessToken && !result.user.displayName) {
     await fetchAndApplyGoogleProfile(result.user, accessToken);
   }
+  try { await migrateLocalDataToCloud(); } catch {}
+  return {
+    uid: result.user.uid,
+    email: result.user.email,
+    displayName: result.user.displayName,
+    isAnonymous: false,
+  };
+};
+
+export const signInWithGoogleWeb = async (): Promise<AuthUser> => {
+  if (!auth) throw new Error("Firebase is not configured");
+  const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(auth, provider);
+  try { await migrateLocalDataToCloud(); } catch {}
+  return {
+    uid: result.user.uid,
+    email: result.user.email,
+    displayName: result.user.displayName,
+    isAnonymous: false,
+  };
+};
+
+export const linkWithGoogleWeb = async (): Promise<AuthUser> => {
+  if (!auth || !auth.currentUser) throw new Error("No user signed in");
+  const provider = new GoogleAuthProvider();
+  const result = await linkWithPopup(auth.currentUser, provider);
   try { await migrateLocalDataToCloud(); } catch {}
   return {
     uid: result.user.uid,

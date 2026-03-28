@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Modal, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
@@ -10,7 +10,7 @@ import { loadUserProfile, saveUserProfile, type UserProfile } from '../storage/u
 import { loadStats, type GameStats } from '../storage/stats';
 import { useEnergy } from '../logic/useEnergy';
 import PrimaryButton from '../components/PrimaryButton';
-import { signIn, signUp, signOut, onAuthStateChanged, resetPassword, linkWithGoogle, signInWithGoogle, type AuthUser } from '../logic/auth';
+import { signIn, signUp, signOut, onAuthStateChanged, resetPassword, linkWithGoogle, signInWithGoogle, signInWithGoogleWeb, linkWithGoogleWeb, type AuthUser } from '../logic/auth';
 import { useSubscription } from '../logic/useSubscription';
 import { Ionicons } from '@expo/vector-icons';
 import { COUNTRIES } from '../constants/countries';
@@ -79,11 +79,15 @@ export default function ProfileScreen({ navigation }: Props) {
     setLinkError('');
     setLinkLoading(true);
     try {
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      if (!isSuccessResponse(response)) { setLinkLoading(false); return; }
-      const { idToken } = response.data;
-      await linkWithGoogle(idToken, null);
+      if (Platform.OS === 'web') {
+        await linkWithGoogleWeb();
+      } else {
+        await GoogleSignin.hasPlayServices();
+        const response = await GoogleSignin.signIn();
+        if (!isSuccessResponse(response)) { setLinkLoading(false); return; }
+        const { idToken } = response.data;
+        await linkWithGoogle(idToken, null);
+      }
       setLinkError('');
     } catch {
       setLinkError('Could not link Google account. Try again.');
@@ -96,11 +100,15 @@ export default function ProfileScreen({ navigation }: Props) {
     setAuthError('');
     setGoogleSignInLoading(true);
     try {
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      if (!isSuccessResponse(response)) { setGoogleSignInLoading(false); return; }
-      const { idToken } = response.data;
-      await signInWithGoogle(idToken, null);
+      if (Platform.OS === 'web') {
+        await signInWithGoogleWeb();
+      } else {
+        await GoogleSignin.hasPlayServices();
+        const response = await GoogleSignin.signIn();
+        if (!isSuccessResponse(response)) { setGoogleSignInLoading(false); return; }
+        const { idToken } = response.data;
+        await signInWithGoogle(idToken, null);
+      }
     } catch {
       setAuthError('Google sign-in failed. Please try again.');
     } finally {
@@ -211,6 +219,9 @@ export default function ProfileScreen({ navigation }: Props) {
   const handleLogout = async () => {
     try {
       await signOut();
+      try {
+        await GoogleSignin.signOut();
+      } catch {}
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Logout failed');
     }
