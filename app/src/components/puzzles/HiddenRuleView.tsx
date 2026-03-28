@@ -18,7 +18,6 @@ export default function HiddenRuleView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Hidden Rule</Text>
       <Text style={styles.instruction}>Find the pattern. What comes next?</Text>
 
       <View style={styles.pairsContainer}>
@@ -56,22 +55,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
   instruction: {
     fontSize: 16,
     color: '#94a3b8',
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   pairsContainer: {
-    gap: 8,
-    marginBottom: 24,
+    gap: 6,
+    marginBottom: 14,
   },
   pairRow: {
     flexDirection: 'row',
@@ -79,7 +72,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#1e1b4b',
     borderRadius: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: '#3730a3',
@@ -131,6 +124,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   optionsContainer: {
-    gap: 12,
+    gap: 8,
   },
 });

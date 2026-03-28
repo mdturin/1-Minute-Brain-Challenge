@@ -41,7 +41,6 @@ export default function TimeDelayedView({ puzzle, onAnswer }: Props) {
   if (phase === 'showing') {
     return (
       <View style={styles.container}>
-        <Text style={styles.typeLabel}>Time Delayed</Text>
         <Text style={styles.instruction}>Memorise these numbers!</Text>
         <View style={styles.sequenceRow}>
           {sequence.map((n, i) => (
@@ -60,7 +59,6 @@ export default function TimeDelayedView({ puzzle, onAnswer }: Props) {
   if (phase === 'hidden') {
     return (
       <View style={styles.container}>
-        <Text style={styles.typeLabel}>Time Delayed</Text>
         <View style={styles.sequenceRow}>
           {sequence.map((_, i) => (
             <View key={i} style={[styles.numBox, styles.numBoxHidden]}>
@@ -74,7 +72,6 @@ export default function TimeDelayedView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Time Delayed</Text>
       <View style={styles.sequenceRow}>
         {sequence.map((_, i) => (
           <View key={i} style={[styles.numBox, styles.numBoxHidden]}>
@@ -101,12 +98,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 12,
   },
   instruction: {
     fontSize: 16,

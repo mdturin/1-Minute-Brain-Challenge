@@ -13,7 +13,6 @@ export default function VisualRotationView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Visual Rotation</Text>
       <Text style={styles.instruction}>Which rotation matches this?</Text>
 
       <View style={styles.sourceBox}>
@@ -44,12 +43,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 8,
   },
   instruction: {
     fontSize: 16,

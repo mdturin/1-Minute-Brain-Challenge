@@ -11,7 +11,6 @@ type Props = {
 export default function ReverseLogicView({ puzzle, onAnswer }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Reverse Logic</Text>
       <View style={styles.promptBox}>
         <Text style={styles.promptIcon}>⚠️</Text>
         <Text style={styles.prompt}>{puzzle.prompt}</Text>
@@ -35,12 +34,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 12,
   },
   promptBox: {
     backgroundColor: '#1c0a00',

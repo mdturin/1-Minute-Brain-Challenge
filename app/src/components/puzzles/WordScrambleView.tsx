@@ -15,8 +15,7 @@ export default function WordScrambleView({ puzzle, onAnswer }: Props) {
   const scrambledWord = lines[1] ?? '';
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.typeLabel}>Word Scramble</Text>
+    <View style={styles.container}>
       <Text style={styles.instruction}>{instruction}</Text>
       {scrambledWord ? (
         <View style={styles.scrambledBox}>
@@ -41,13 +40,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
+  },
   instruction: {
     fontSize: 16,
     color: '#94a3b8',

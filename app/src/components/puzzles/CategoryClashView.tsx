@@ -13,7 +13,6 @@ export default function CategoryClashView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Category Clash</Text>
 
       <View style={styles.categoryBox}>
         <Text style={styles.categoryLabel}>Category</Text>
@@ -39,12 +38,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 12,
   },
   categoryBox: {
     backgroundColor: '#0f172a',

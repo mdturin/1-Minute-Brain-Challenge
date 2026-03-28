@@ -11,7 +11,6 @@ type Props = {
 export default function SpotMisspellingView({ puzzle, onAnswer }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Spot the Mistake</Text>
 
       <View style={styles.promptBox}>
         <Text style={styles.promptIcon}>🔍</Text>
@@ -37,12 +36,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 12,
   },
   promptBox: {
     backgroundColor: '#1c0f00',

@@ -1,13 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +19,7 @@ import {
   fetchMyRank,
   computeWeeklyRank,
   nextWeekResetMs,
+  upsertLeaderboardEntry,
   type LeaderboardEntry,
 } from '../storage/leaderboard';
 import { getAvatar } from '../constants/avatars';
@@ -59,6 +62,7 @@ export default function LeaderboardScreen({ navigation }: Props) {
   const [myRank, setMyRank] = useState<number | null>(null);
   const [myEntry, setMyEntry] = useState<LeaderboardEntry | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
   const [resetSecondsLeft, setResetSecondsLeft] = useState(() =>
     Math.max(0, Math.floor((nextWeekResetMs() - Date.now()) / 1000)),
@@ -88,11 +92,25 @@ export default function LeaderboardScreen({ navigation }: Props) {
         user ? loadStats() : Promise.resolve(null),
       ]);
       if (user && stats) {
+        // Auto-heal: if the leaderboard entry is stale (e.g. upsert failed after a game),
+        // fix it now so the displayed score matches the user's actual best score.
+        const found = data.find((e) => e.uid === user.uid);
+        if (found && found.bestScore < stats.bestScore) {
+          found.bestScore = stats.bestScore;
+          void loadUserProfile().then((profile) =>
+            upsertLeaderboardEntry(user.uid, {
+              displayName: profile.displayName || found.displayName,
+              country: profile.country ?? found.country,
+              bestScore: stats.bestScore,
+              updatedAt: Date.now(),
+              avatarId: profile.avatarId,
+            })
+          ).catch(() => {});
+        }
         const rank = tab === 'weekly'
           ? computeWeeklyRank(data, stats.bestScore)
           : await fetchMyRank(user.uid, stats.bestScore);
         setMyRank(rank);
-        const found = data.find((e) => e.uid === user.uid);
         if (!found) {
           const synthetic: LeaderboardEntry = {
             uid: user.uid,
@@ -142,9 +160,17 @@ export default function LeaderboardScreen({ navigation }: Props) {
     }
   };
 
-  useEffect(() => {
-    void load();
-  }, [tab]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [tab]),
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
 
   const renderEntry = ({ item, index }: { item: LeaderboardEntry; index: number }) => {
     const rank = index + 1;
@@ -248,6 +274,14 @@ export default function LeaderboardScreen({ navigation }: Props) {
               keyExtractor={(item) => item.uid}
               renderItem={renderEntry}
               contentContainerStyle={styles.list}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#a5b4fc"
+                  colors={['#a5b4fc']}
+                />
+              }
               ListEmptyComponent={
                 <View style={styles.centered}>
                   <Text style={styles.emptyText}>No entries yet. Be the first!</Text>

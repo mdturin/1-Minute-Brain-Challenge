@@ -134,11 +134,15 @@ export default function GameScreen({ navigation, route }: Props) {
 
   const feedbackOpacity = useRef(new Animated.Value(0)).current;
   const isAnsweringRef = useRef(false);
+  const [puzzleKey, setPuzzleKey] = useState(0);
 
-  // Reset double-tap guard after new puzzle renders
+  // Reset double-tap guard whenever a new puzzle is issued.
+  // Using puzzleKey (always increments) instead of currentPuzzle so that
+  // if puzzle generation ever fails silently the guard still resets and
+  // the buttons never lock permanently.
   useEffect(() => {
     isAnsweringRef.current = false;
-  }, [currentPuzzle]);
+  }, [puzzleKey]);
 
   useEffect(() => {
     setRemainingTime(difficultyConfig.durationSeconds);
@@ -152,6 +156,7 @@ export default function GameScreen({ navigation, route }: Props) {
     puzzlesSolvedRef.current = 0;
     recentTypesRef.current = [];
     setCurrentPuzzle(generateRandomPuzzle(difficultyKey, [], rngRef.current));
+    setPuzzleKey((k) => k + 1);
   }, [difficultyKey]);
 
   useEffect(() => {
@@ -235,14 +240,12 @@ export default function GameScreen({ navigation, route }: Props) {
         puzzlesSolvedRef.current = next;
         return next;
       });
-      setStreak((prev) => {
-        const next = prev + 1;
-        setMaxStreak((m) => {
-          const newMax = Math.max(m, next);
-          maxStreakRef.current = newMax;
-          return newMax;
-        });
-        return next;
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      setMaxStreak((m) => {
+        const newMax = Math.max(m, newStreak);
+        maxStreakRef.current = newMax;
+        return newMax;
       });
       showFeedback('correct', delta);
     } else {
@@ -250,6 +253,7 @@ export default function GameScreen({ navigation, route }: Props) {
       showFeedback('wrong', 0);
     }
 
+    setPuzzleKey((k) => k + 1);
     setCurrentPuzzle((prev) => {
       const updatedRecent = [...recentTypesRef.current, prev.type].slice(-4);
       recentTypesRef.current = updatedRecent;
@@ -299,6 +303,7 @@ export default function GameScreen({ navigation, route }: Props) {
       setStatus('playing');
       recentTypesRef.current = [];
       setCurrentPuzzle(generateRandomPuzzle(difficultyKey, [], rngRef.current));
+      setPuzzleKey((k) => k + 1);
       scoreRef.current = 0;
       maxStreakRef.current = 0;
       puzzlesSolvedRef.current = 0;
@@ -407,8 +412,10 @@ export default function GameScreen({ navigation, route }: Props) {
           </Text>
         </View>
 
-        {/* Puzzle Card */}
-        <View style={styles.main}>
+        {/* Puzzle Card — key forces full remount on each new puzzle so that
+            components with internal phase state (DualTaskView, TimeDelayedView)
+            always start fresh instead of resuming a stale phase. */}
+        <View key={puzzleKey} style={styles.main}>
           <Card>{renderPuzzle()}</Card>
         </View>
 
@@ -568,7 +575,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   topBar: {
     flexDirection: 'row',

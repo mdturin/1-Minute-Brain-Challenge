@@ -15,7 +15,6 @@ export default function RapidComparisonView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Rapid Comparison</Text>
       <Text style={styles.instruction}>
         Which is <Text style={styles.keyword}>{questionWord}</Text>?
       </Text>
@@ -49,12 +48,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 8,
   },
   instruction: {
     fontSize: 18,

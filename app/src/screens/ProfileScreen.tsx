@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ActivityIndicator, Alert, FlatList, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
 import Constants from 'expo-constants';
@@ -107,33 +108,42 @@ export default function ProfileScreen({ navigation }: Props) {
     }
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [loadedProfile, loadedStats] = await Promise.all([loadUserProfile(), loadStats()]);
+      setProfile(loadedProfile);
+      setStats(loadedStats);
+    } catch {
+      setHasError(true);
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     const unsubscribe = onAuthStateChanged((authUser) => {
       if (!isMounted) return;
       setUser(authUser);
-      if (authUser) {
-        const init = async () => {
-          try {
-            const [loadedProfile, loadedStats] = await Promise.all([loadUserProfile(), loadStats()]);
-            if (!isMounted) return;
-            setProfile(loadedProfile);
-            setStats(loadedStats);
-          } catch {
-            if (isMounted) setHasError(true);
-          }
-        };
-        void init();
-      } else {
-        setProfile(null);
-        setStats(null);
-      }
+      void loadData();
     });
     return () => {
       isMounted = false;
       unsubscribe();
     };
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadData();
+    }, [loadData]),
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
   const filteredCountries = countrySearch.trim()
     ? COUNTRIES.filter(c => c.toLowerCase().includes(countrySearch.toLowerCase()))
@@ -404,7 +414,18 @@ export default function ProfileScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#a5b4fc"
+            colors={['#a5b4fc']}
+          />
+        }
+      >
         {/* Header */}
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>

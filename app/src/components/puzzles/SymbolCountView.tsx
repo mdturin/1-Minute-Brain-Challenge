@@ -15,8 +15,7 @@ export default function SymbolCountView({ puzzle, onAnswer }: Props) {
   const grid = parts.slice(1).join('\n\n');
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.typeLabel}>Symbol Count</Text>
+    <View style={styles.container}>
       <Text style={styles.question}>{question}</Text>
       {grid ? (
         <View style={styles.gridBox}>
@@ -41,13 +40,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
+  },
   question: {
     fontSize: 18,
     fontWeight: '700',

@@ -19,7 +19,6 @@ export default function StroopEffectView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Color-Word Conflict</Text>
       <Text style={styles.instruction}>{question}</Text>
 
       <View style={styles.wordBox}>
@@ -50,12 +49,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 8,
   },
   instruction: {
     fontSize: 16,

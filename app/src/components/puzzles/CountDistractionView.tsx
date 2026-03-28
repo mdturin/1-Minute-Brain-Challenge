@@ -16,7 +16,6 @@ export default function CountDistractionView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Count with Distraction</Text>
 
       <View style={styles.ruleBox}>
         <Text style={styles.ruleText}>
@@ -54,12 +53,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 10,
   },
   ruleBox: {
     backgroundColor: '#1c1700',

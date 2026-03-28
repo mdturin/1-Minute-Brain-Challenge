@@ -11,7 +11,6 @@ type Props = {
 export default function PatternVisualView({ puzzle, onAnswer }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Visual Pattern</Text>
       <Text style={styles.prompt}>{puzzle.prompt}</Text>
       <View style={styles.optionsContainer}>
         {puzzle.options.map((option, index) => (
@@ -31,12 +30,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 8,
   },
   prompt: {
     fontSize: 18,

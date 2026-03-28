@@ -14,7 +14,6 @@ export default function GoNoGoView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Go / No-Go</Text>
 
       <View style={styles.ruleBox}>
         <Text style={styles.ruleAction}>
@@ -49,12 +48,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 10,
   },
   ruleBox: {
     backgroundColor: '#0f1f0f',

@@ -31,7 +31,6 @@ export default function MultiStepView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Multi-Step</Text>
       <View style={styles.stepsBox}>
         <View style={styles.stepRow}>
           <View style={styles.stepBadge}>
@@ -66,12 +65,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 12,
   },
   stepsBox: {
     backgroundColor: '#0f172a',

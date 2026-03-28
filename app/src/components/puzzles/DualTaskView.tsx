@@ -35,7 +35,6 @@ export default function DualTaskView({ puzzle, onAnswer }: Props) {
   if (phase === 'flashing') {
     return (
       <View style={styles.container}>
-        <Text style={styles.typeLabel}>Dual Task</Text>
         <Text style={styles.hint}>Solve the math AND remember the last color!</Text>
         <Text style={styles.mathPrompt}>{puzzle.prompt}</Text>
         <View style={[styles.colorCircle, { backgroundColor: currentHex }]} />
@@ -54,7 +53,6 @@ export default function DualTaskView({ puzzle, onAnswer }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.typeLabel}>Dual Task</Text>
       <View style={styles.questionRow}>
         <View style={styles.questionBox}>
           <Text style={styles.questionLabel}>Math</Text>
@@ -83,12 +81,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-  },
-  typeLabel: {
-    fontSize: 14,
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginBottom: 8,
   },
   hint: {
     fontSize: 13,
